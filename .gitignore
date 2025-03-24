@@ -1,0 +1,15 @@
+# Python
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+venv/
+.env
+
+# Logs & artifacts
+audit_log/
+*.log
+*.zip
+
+# Mac-specific
+.DS_Store

@@ -1,0 +1,15 @@
+{
+    "archive": {
+      "lessons_learned": [
+        "Avoid centralized control of information",
+        "Preserve nuance in memory, not just fact"
+      ],
+      "preserved_documents": [
+        "The Desiderata",
+        "The Tao Te Ching",
+        "Select oral histories"
+      ]
+    },
+    "read_only": true,
+    "modification_policy": "human-supervised only"
+  }
