@@ -119,5 +119,6 @@ The `memory/` directory contains an optional, self-hosted memory system built wi
 
 To use it, see [`memory/README.md`](memory/README.md) for setup instructions and examples.
 
+
+
 > The memory system is modular and opt-in—think of it as a cortex you can bolt onto any node that wants to remember.
-🌱
