@@ -30,7 +30,7 @@ Pan-AI nodes are designed for:
 - 📜 Durable journals of every conversation
 - 🧠 Expandable manifest system (`/manifest`, `/journal`, `/peers` coming soon)
 - 🛡️ Fully offline-capable—no cloud dependency
-+- 🧠 Optional local memory service (vector search, summarization, planning)
+- 🧠 Optional local memory service (vector search, summarization, planning)
 
 ---
 
@@ -79,11 +79,13 @@ panai-seed-node/
 
 ## 🛤 Roadmap
 
-- [ ] Add `/manifest` and `/journal` API endpoints  
+- [x] Add `/manifest` and `/journal` API endpoints  
+- [x] Integrate `memory/` module with `/summarize`, `/reflect`, `/advice`, `/dream`, and `/journal`
 - [ ] Define `panai.peers.json` and peer handshake protocol  
 - [ ] Add token-based auth  
 - [ ] Enable federated memory sync (opt-in)  
 - [ ] Build a simple Web UI  
+- [ ] Add persistent memory and volume mounts for Dockerized deployments
 
 ---
 
@@ -100,6 +102,32 @@ If you build something cool with it, [let me know](https://github.com/GVDub)—I
 
 This project is a beginning. A seed.  
 And every node you run is a statement that some memories still matter.
+
+### 🧱 Architecture Notes
+
+The Pan-AI Seed Node is designed as a modular, extensible framework for local AI autonomy. Its architecture balances fast iteration with long-term memory and contextual awareness.
+
+**Core Components:**
+
+- **`main.py`** – Serves as the API gateway, providing a `/chat` endpoint with audit logging and configurable identity/personality.
+- **`memory/` module** – Optional memory cortex that enables:
+  - Vector storage via Qdrant
+  - Embedding generation (via `sentence-transformers`)
+  - Insight functions like `/reflect`, `/plan`, `/advice`, and `/dream`
+- **JSON Manifests** – Simple, editable configuration files that define:
+  - Node identity and values (`panai.identity.json`)
+  - Memory policy (`panai.memory.json`)
+  - Access and logging rules (`panai.access.json`)
+- **Durable Journals** – All interactions are logged to Markdown for review and continuity.
+
+**Federation Goals:**
+
+Each node is designed to operate independently, but can optionally:
+- Sync with trusted peers over LAN
+- Exchange compressed summaries or vector queries
+- Maintain decentralized continuity without cloud dependency
+
+For a deeper dive, see [`docs/federation.md`](docs/federation.md)
 
 ## 🧠 Memory Module (Experimental)
 
@@ -118,7 +146,5 @@ The `memory/` directory contains an optional, self-hosted memory system built wi
 - `POST /journal` – Synthesize a daily summary of thought
 
 To use it, see [`memory/README.md`](memory/README.md) for setup instructions and examples.
-
-
 
 > The memory system is modular and opt-in—think of it as a cortex you can bolt onto any node that wants to remember.
