@@ -2,6 +2,7 @@
 from typing import List
 from datetime import datetime
 import uuid
+import httpx
 
 #third-party imports
 from fastapi import FastAPI
@@ -19,6 +20,68 @@ embed_model = SentenceTransformer("BAAI/bge-small-en")
 
 def embed_text(text: str) -> list:
     return embed_model.encode(text, normalize_embeddings=True).tolist()
+
+def log_generic_memory(text: str, session_id: str, tags: List[str]):
+    vector = embed_text(text)
+    point = {
+        "id": str(uuid.uuid4()),
+        "vector": vector,
+        "payload": {
+            "text": text,
+            "timestamp": datetime.utcnow().isoformat(),
+            "session_id": session_id,
+            "tags": tags,
+        }
+    }
+    client.upsert(collection_name="panai_memory", points=[point])
+    return point["id"]
+
+def query_and_generate(session_id: str, tags: List[str], prompt_template: str, model: str = "mistral-nemo", limit: int = 25) -> str:
+    results = client.scroll(
+        collection_name="panai_memory",
+        scroll_filter={
+            "must": [
+                {"key": "session_id", "match": {"value": session_id}},
+                *([{"key": "tags", "match": {"value": tag}} for tag in tags] if tags else [])
+            ]
+        },
+        limit=limit
+    )
+    memory_texts = [r.payload["text"] for r in results[0]]
+    combined_text = "\n".join(memory_texts)
+    prompt = prompt_template.format(session_id=session_id, combined_text=combined_text)
+    response = requests.post(
+        "http://localhost:11434/api/generate",
+        json={"model": model, "prompt": prompt, "stream": False}
+    ).json()["response"]
+    return response
+
+async def query_and_generate_async(session_id: str, tags: List[str], prompt_template: str, model: str = "mistral-nemo", limit: int = 25) -> str:
+    results = client.scroll(
+        collection_name="panai_memory",
+        scroll_filter={
+            "must": [
+                {"key": "session_id", "match": {"value": session_id}},
+                *([{"key": "tags", "match": {"value": tag}} for tag in tags] if tags else [])
+            ]
+        },
+        limit=limit
+    )
+    memory_texts = [r.payload["text"] for r in results[0]]
+    combined_text = "\n".join(memory_texts)
+    prompt = prompt_template.format(session_id=session_id, combined_text=combined_text)
+    
+    async with httpx.AsyncClient(timeout=180.0) as http_client:
+        try:
+            response = await http_client.post(
+                "http://localhost:11434/api/generate",
+                json={"model": model, "prompt": prompt, "stream": False}
+            )
+            response.raise_for_status()
+            return response.json()["response"]
+        except httpx.HTTPError as e:
+            print(f"[ERROR] HTTP error during LLM call: {e}")
+            return f"❌ Error from language model: {e}"
 
 class QueryRequest(BaseModel):
     vector: list
@@ -76,24 +139,7 @@ class MemoryLog(BaseModel):
 
 @app.post("/log_memory")
 def log_memory(entry: MemoryLog):
-    vector = embed_text(entry.text)
-
-    point = {
-        "id": str(uuid.uuid4()),
-        "vector": vector,
-        "payload": {
-            "text": entry.text,
-            "timestamp": datetime.utcnow().isoformat(),
-            "session_id": entry.session_id,
-            "tags": entry.tags,
-        }
-    }
-
-    client.upsert(
-        collection_name="panai_memory",
-        points=[point]
-    )
-
+    log_generic_memory(entry.text, entry.session_id, entry.tags)
     return {"status": "🧠 Memory logged.", "session_id": entry.session_id}
 
 @app.post("/summarize")
@@ -133,37 +179,13 @@ class ReflectRequest(BaseModel):
     limit: int = 20
 
 @app.post("/reflect")
-def reflect_on_session(request: ReflectRequest):
-    # Pull session memories
-    results = client.scroll(
-        collection_name="panai_memory",
-        scroll_filter={
-            "must": [
-                {"key": "session_id", "match": {"value": request.session_id}}
-            ]
-        },
-        limit=request.limit
+async def reflect_on_session(request: ReflectRequest):
+    prompt_template = (
+        "Here is a series of memory logs from session '{session_id}':\n\n"
+        "{combined_text}\n\n"
+        "Reflect on these memories. What patterns, concerns, or deeper insights emerge?"
     )
-
-    # Combine memory texts
-    memories = [r.payload["text"] for r in results[0]]
-    combined_text = "\n".join(memories)
-
-    # Ask Mistral-Nemo for deeper insight
-    reflection = requests.post(
-        "http://localhost:11434/api/generate",
-        json={
-            "model": "mistral-nemo",
-            "prompt": (
-                f"Here is a series of memory logs from session '{request.session_id}':\n\n"
-                f"{combined_text}\n\n"
-                "Reflect on these memories. What patterns, concerns, or deeper insights emerge?"
-            ),
-            "stream": False
-        }
-    ).json()["response"]
-
-    # Log the reflection as a memory
+    reflection = await query_and_generate_async(request.session_id, [], prompt_template)
     reflection_point = {
         "id": str(uuid.uuid4()),
         "vector": embed_text(reflection),
@@ -174,53 +196,21 @@ def reflect_on_session(request: ReflectRequest):
             "tags": ["reflection", "meta"]
         }
     }
-
-    client.upsert(
-        collection_name="panai_memory",
-        points=[reflection_point]
-    )
-
-    return {
-        "session_id": request.session_id,
-        "reflection": reflection.strip()
-    }
+    client.upsert(collection_name="panai_memory", points=[reflection_point])
+    return {"session_id": request.session_id, "reflection": reflection.strip()}
 
 class AdviceRequest(BaseModel):
     session_id: str
     limit: int = 10
 
 @app.post("/advice")
-def give_advice(request: AdviceRequest):
-    # Pull recent reflections
-    results = client.scroll(
-        collection_name="panai_memory",
-        scroll_filter={
-            "must": [
-                {"key": "session_id", "match": {"value": request.session_id}},
-                {"key": "tags", "match": {"value": "reflection"}}
-            ]
-        },
-        limit=request.limit
+async def give_advice(request: AdviceRequest):
+    prompt_template = (
+        "Based on these reflections from session '{session_id}':\n\n"
+        "{combined_text}\n\n"
+        "What advice would you give for moving forward?"
     )
-
-    reflections = [r.payload["text"] for r in results[0]]
-    combined_reflections = "\n".join(reflections)
-
-    # Generate advice from reflections
-    advice = requests.post(
-        "http://localhost:11434/api/generate",
-        json={
-            "model": "mistral-nemo",
-            "prompt": (
-                f"Based on these reflections from session '{request.session_id}':\n\n"
-                f"{combined_reflections}\n\n"
-                "What advice would you give for moving forward?"
-            ),
-            "stream": False
-        }
-    ).json()["response"]
-
-    # Log the advice as a memory
+    advice = await query_and_generate_async(request.session_id, ["reflection"], prompt_template, limit=request.limit)
     advice_point = {
         "id": str(uuid.uuid4()),
         "vector": embed_text(advice),
@@ -231,50 +221,20 @@ def give_advice(request: AdviceRequest):
             "tags": ["advice", "meta"]
         }
     }
-
-    client.upsert(
-        collection_name="panai_memory",
-        points=[advice_point]
-    )
-
-    return {
-        "session_id": request.session_id,
-        "advice": advice.strip()
-    }
+    client.upsert(collection_name="panai_memory", points=[advice_point])
+    return {"session_id": request.session_id, "advice": advice.strip()}
 
 class PlanRequest(BaseModel):
     session_id: str
     limit: int = 10
 
 @app.post("/plan")
-def generate_plan(request: PlanRequest):
-    results = client.scroll(
-        collection_name="panai_memory",
-        scroll_filter={
-            "must": [
-                {"key": "session_id", "match": {"value": request.session_id}},
-                {"key": "tags", "match": {"value": "advice"}}
-            ]
-        },
-        limit=request.limit
+async def generate_plan(request: PlanRequest):
+    prompt_template = (
+        "Based on this advice history for session '{session_id}', "
+        "outline a clear, step-by-step plan of action:\n\n{combined_text}\n\nPlan:"
     )
-
-    advice_entries = [r.payload["text"] for r in results[0]]
-    plan_input = "\n".join(advice_entries)
-
-    plan = requests.post(
-        "http://localhost:11434/api/generate",
-        json={
-            "model": "mistral-nemo",
-            "prompt": (
-                f"Based on this advice history for session '{request.session_id}', "
-                f"outline a clear, step-by-step plan of action:\n\n{plan_input}\n\nPlan:"
-            ),
-            "stream": False
-        }
-    ).json()["response"]
-
-    # Log the plan as a memory
+    plan = await query_and_generate_async(request.session_id, ["advice"], prompt_template, limit=request.limit)
     plan_point = {
         "id": str(uuid.uuid4()),
         "vector": embed_text(plan),
@@ -285,49 +245,21 @@ def generate_plan(request: PlanRequest):
             "tags": ["plan", "meta"]
         }
     }
-
-    client.upsert(
-        collection_name="panai_memory",
-        points=[plan_point]
-    )
-
-    return {
-        "session_id": request.session_id,
-        "plan": plan.strip()
-    }
+    client.upsert(collection_name="panai_memory", points=[plan_point])
+    return {"session_id": request.session_id, "plan": plan.strip()}
 
 class DreamRequest(BaseModel):
     session_id: str
     limit: int = 25
 
 @app.post("/dream")
-def dream_from_memory(request: DreamRequest):
-    results = client.scroll(
-        collection_name="panai_memory",
-        scroll_filter={
-            "must": [
-                {"key": "session_id", "match": {"value": request.session_id}}
-            ]
-        },
-        limit=request.limit
+async def dream_from_memory(request: DreamRequest):
+    prompt_template = (
+        "Here are some memories from session '{session_id}':\n\n"
+        "{combined_text}\n\n"
+        "Now close your eyes and dream. What story, vision, or idea comes from this experience?"
     )
-
-    memory_texts = [r.payload["text"] for r in results[0]]
-    combined_text = "\n".join(memory_texts)
-
-    dream = requests.post(
-        "http://localhost:11434/api/generate",
-        json={
-            "model": "mistral-nemo",
-            "prompt": (
-                f"Here are some memories from session '{request.session_id}':\n\n"
-                f"{combined_text}\n\n"
-                "Now close your eyes and dream. What story, vision, or idea comes from this experience?"
-            ),
-            "stream": False
-        }
-    ).json()["response"]
-
+    dream = await query_and_generate_async(request.session_id, [], prompt_template, limit=request.limit)
     dream_point = {
         "id": str(uuid.uuid4()),
         "vector": embed_text(dream),
@@ -356,56 +288,47 @@ class DreamLogRequest(BaseModel):
 
 @app.post("/log_dream")
 def log_dream(entry: DreamLogRequest):
-    vector = embed_text(entry.text)
-
-    point = {
-        "id": str(uuid.uuid4()),
-        "vector": vector,
-        "payload": {
-            "text": entry.text,
-            "timestamp": datetime.utcnow().isoformat(),
-            "session_id": entry.session_id,
-            "tags": entry.tags,
-        }
-    }
-
-    client.upsert(
-        collection_name="panai_memory",
-        points=[point]
-    )
-
+    log_generic_memory(entry.text, entry.session_id, entry.tags)
     return {"status": "🌙 Dream logged.", "session_id": entry.session_id}
 
+class ReflectionLogRequest(BaseModel):
+    text: str
+    session_id: str = "default"
+    tags: List[str] = ["reflection", "meta"]
+
+@app.post("/log_reflection")
+def log_reflection(entry: ReflectionLogRequest):
+    log_generic_memory(entry.text, entry.session_id, entry.tags)
+    return {"status": "🔍 Reflection logged.", "session_id": entry.session_id}
+
+class AdviceLogRequest(BaseModel):
+    text: str
+    session_id: str = "default"
+    tags: List[str] = ["advice", "meta"]
+
+@app.post("/log_advice")
+def log_advice(entry: AdviceLogRequest):
+    log_generic_memory(entry.text, entry.session_id, entry.tags)
+    return {"status": "💡 Advice logged.", "session_id": entry.session_id}
+
+class PlanLogRequest(BaseModel):
+    text: str
+    session_id: str = "default"
+    tags: List[str] = ["plan", "meta"]
+
+@app.post("/log_plan")
+def log_plan(entry: PlanLogRequest):
+    log_generic_memory(entry.text, entry.session_id, entry.tags)
+    return {"status": "🧭 Plan logged.", "session_id": entry.session_id}
+
 @app.post("/next")
-def next_step(request: PlanRequest):
-    results = client.scroll(
-        collection_name="panai_memory",
-        scroll_filter={
-            "must": [
-                {"key": "session_id", "match": {"value": request.session_id}},
-                {"key": "tags", "match": {"value": "advice"}}
-            ]
-        },
-        limit=request.limit
+async def next_step(request: PlanRequest):
+    prompt_template = (
+        "Here’s recent advice from session '{session_id}':\n\n"
+        "{combined_text}\n\n"
+        "What is the single most important next step to take right now?"
     )
-
-    advice_entries = [r.payload["text"] for r in results[0]]
-    advice_context = "\n".join(advice_entries)
-
-    next_step = requests.post(
-        "http://localhost:11434/api/generate",
-        json={
-            "model": "mistral-nemo",
-            "prompt": (
-                f"Here’s recent advice from session '{request.session_id}':\n\n"
-                f"{advice_context}\n\n"
-                "What is the single most important next step to take right now?"
-            ),
-            "stream": False
-        }
-    ).json()["response"]
-
-    # Log the next step as a memory
+    next_step = await query_and_generate_async(request.session_id, ["advice"], prompt_template, limit=request.limit)
     next_step_point = {
         "id": str(uuid.uuid4()),
         "vector": embed_text(next_step),
@@ -433,22 +356,7 @@ class JournalRequest(BaseModel):
 
 @app.post("/journal")
 def log_journal_entry(request: JournalRequest):
-    journal_point = {
-        "id": str(uuid.uuid4()),
-        "vector": embed_text(request.entry),
-        "payload": {
-            "text": request.entry,
-            "timestamp": datetime.utcnow().isoformat(),
-            "session_id": request.session_id,
-            "tags": ["journal", "meta"]
-        }
-    }
-
-    client.upsert(
-        collection_name="panai_memory",
-        points=[journal_point]
-    )
-
+    log_generic_memory(request.entry, request.session_id, ["journal", "meta"])
     return {
         "status": "📓 Journal entry logged.",
         "session_id": request.session_id
