@@ -79,7 +79,7 @@ panai-seed-node/
 
 ## 🛤 Roadmap
 
-- [x] Add `/manifest` and `/journal` API endpoints  
+- [x] Add `/manifest` and `/journal` API endpoints
 - [x] Integrate `memory/` module with `/summarize`, `/reflect`, `/advice`, `/dream`, and `/journal`
 - [ ] Define `panai.peers.json` and peer handshake protocol  
 - [ ] Add token-based auth  
