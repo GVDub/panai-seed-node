@@ -11,5 +11,11 @@
       ]
     },
     "read_only": true,
-    "modification_policy": "human-supervised only"
-  }
+    "modification_policy": "human-supervised only",
+    "defaults": {
+      "embedding_model": "bge-small-en",
+      "vector_db": "qdrant",
+      "default_tags": ["meta"],
+      "max_tokens": 2048
+    }
+}

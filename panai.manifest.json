@@ -1,0 +1,32 @@
+{
+  "project": "PanAI Seed Node",
+  "version": "0.3.0",
+  "description": "A modular, decentralized AI framework seed node, designed to support persistent memory, local inference, and inter-node federation.",
+  "modules": {
+    "memory_api": {
+      "path": "memory_api/",
+      "description": "Handles memory logging, embedding, vector storage, and interaction with local LLMs.",
+      "endpoints": ["/log_memory", "/reflect", "/advice", "/plan", "/dream", "/summarize"]
+    },
+    "services": {
+      "path": "services/",
+      "files": {
+        "config.py": "Handles system-wide configuration and environment variables.",
+        "logger.py": "Logging utility with structured and colorized output.",
+        "chat.py": "Handles chat inference and dynamic model selection logic.",
+        "memory.py": "Shared memory access logic for embedding, retrieval, and transformation."
+      }
+    }
+  },
+  "dependencies": {
+    "python": ">=3.10",
+    "fastapi": ">=0.95.0",
+    "qdrant-client": ">=1.7.0",
+    "httpx": ">=0.24.0",
+    "sentence-transformers": ">=2.2.0",
+    "uvicorn": ">=0.22.0"
+  },
+  "status": "active",
+  "notes": "This manifest will evolve to include federation metadata, service discovery protocols, and identity/credential validation.",
+  "hosts": "nodes.json"
+}

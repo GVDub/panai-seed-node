@@ -17,6 +17,17 @@ The memory module is implemented as a FastAPI application with endpoints for sto
 - **BAAI/bge-small-en** via `SentenceTransformer` for embedding text
 - **Ollama-compatible models** (e.g., `mistral-nemo`) for summarization, reflection, planning, and dreaming
 
+## Services Integration
+
+As of the latest refactor, core functionality has been modularized into a `services` directory. This includes:
+
+- `services/memory.py`: Handles memory logging, embedding, and vector search using Qdrant.
+- `services/chat.py`: Manages interaction with local language models via Ollama.
+- `services/config.py`: Centralized configuration and environment variable management.
+- `services/logger.py`: Shared logger setup for consistent output and debugging.
+
+These services are consumed by the main FastAPI app, enabling easier extension, testing, and eventual integration into a federated PanAI network.
+
 ## Key Endpoints
 
 - `POST /log_memory`: Add a new memory to the system
@@ -33,8 +44,9 @@ The memory module is implemented as a FastAPI application with endpoints for sto
 
 ## File Location
 
-The core application code lives in:
-/memory/memory_api.py
+The core application code has been modularized and now resides in:
+/memory_api/memory_api.py
+/services/memory.py
 
 ## Future Directions
 

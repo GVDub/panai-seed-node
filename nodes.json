@@ -1,0 +1,40 @@
+{
+  "nodes": [
+    {
+      "name": "GEM10",
+      "ip": "10.67.1.153",
+      "hostname": "gem10.local",
+      "services": ["memory", "chat"],
+      "status": "active",
+      "last_seen": "2025-04-16T00:00:00Z",
+      "health": "unknown"
+    },
+    {
+      "name": "UM890 AI",
+      "ip": "10.67.1.161",
+      "hostname": "um890ai.local",
+      "services": ["memory", "chat"],
+      "status": "active",
+      "last_seen": "2025-04-16T00:00:00Z",
+      "health": "unknown"
+    },
+    {
+      "name": "UM890 Arch",
+      "ip": "10.67.1.163",
+      "hostname": "um890arch.local",
+      "services": ["memory"],
+      "status": "standby",
+      "last_seen": "2025-04-16T00:00:00Z",
+      "health": "unknown"
+    },
+    {
+      "name": "GVDubAI",
+      "ip": "10.67.1.140",
+      "hostname": "gvdubai.local",
+      "services": ["chat"],
+      "status": "active",
+      "last_seen": "2025-04-16T00:00:00Z",
+      "health": "unknown"
+    }
+  ]
+}

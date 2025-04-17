@@ -4,6 +4,7 @@ from datetime import datetime
 import json
 import os
 import requests
+from fastapi.responses import JSONResponse
 
 # --- Config Loader ---
 def load_config(file_name):
@@ -77,3 +78,32 @@ async def chat(req: ChatRequest):
         model=model_name,
         timestamp=datetime.now().isoformat()
     )
+
+# --- Node Health Check ---
+@app.get("/health")
+async def health_check():
+    return {"status": "ok", "node": identity.get("node_name", "seed-node")}
+
+# --- Node Connection Test ---
+class NodePingRequest(BaseModel):
+    target_url: str
+
+@app.post("/ping_node")
+async def ping_node(req: NodePingRequest):
+    try:
+        r = requests.get(f"{req.target_url}/health", timeout=5)
+        r.raise_for_status()
+        return {
+            "reachable": True,
+            "target_url": req.target_url,
+            "response": r.json()
+        }
+    except Exception as e:
+        return JSONResponse(
+            status_code=503,
+            content={
+                "reachable": False,
+                "target_url": req.target_url,
+                "error": str(e)
+            }
+        )

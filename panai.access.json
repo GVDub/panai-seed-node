@@ -3,5 +3,17 @@
     "allowed_peers": ["localhost", "macstudio.local"],
     "auth_method": "none",
     "log_interactions": true,
-    "log_format": "markdown"
-  }
+    "log_format": "markdown",
+    "rate_limit": {
+        "requests_per_minute": 60,
+        "burst": 10
+    },
+    "access_roles": {
+        "admin": ["localhost"],
+        "user": ["macstudio.local"]
+    },
+    "cors": {
+        "enabled": true,
+        "allowed_origins": ["http://localhost:3000", "http://macstudio.local"]
+    }
+}
