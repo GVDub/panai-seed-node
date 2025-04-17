@@ -5,6 +5,8 @@ import json
 import os
 import requests
 from fastapi.responses import JSONResponse
+import time
+start_time = time.time()
 
 # --- Config Loader ---
 def load_config(file_name):
@@ -16,7 +18,7 @@ memory = load_config("panai.memory.json")
 access = load_config("panai.access.json")
 
 model_name = identity.get("model", "llama3")
-ollama_url = "http://localhost:11434/api/chat"
+ollama_url = access.get("ollama_url", "http://localhost:11434/api/chat")
 
 ## --- App Setup ---
 import socket
@@ -34,8 +36,8 @@ app.include_router(memory_router, prefix="/memory")
 async def preload_models():
     import httpx
     warmup_prompts = [
-        {"model": "mistral-nemo", "prompt": "Hello", "stream": False},
-        {"model": "mistral", "prompt": "Hello", "stream": False}
+        {"model": model, "prompt": "Hello", "stream": False}
+        for model in identity.get("warmup_models", [])
     ]
     async with httpx.AsyncClient(timeout=30.0) as client:
         for p in warmup_prompts:
@@ -94,7 +96,7 @@ async def chat(req: ChatRequest):
         r.raise_for_status()
         content = r.json()["response"]
     except Exception as e:
-        content = f"Error contacting model: {e}"
+        content = f"Error contacting model '{model_name}': {e}"
 
     log_interaction(req.prompt, content, req.tags)
 
@@ -107,7 +109,20 @@ async def chat(req: ChatRequest):
 # --- Node Health Check ---
 @app.get("/health")
 async def health_check():
-    return {"status": "ok", "node": resolve_node_name(identity)}
+    return {
+        "status": "ok",
+        "node": resolve_node_name(identity),
+        "version": identity.get("version", "unknown"),
+        "description": identity.get("description", ""),
+        "models": {
+            "default": identity.get("models", {}).get("default", "unspecified"),
+            "count": len(identity.get("models", {}).get("available", []))
+        },
+        "capabilities": identity.get("capabilities", []),
+        "values": identity.get("values", []),
+        "uptime_seconds": int(time.time() - start_time),
+        "started_at": datetime.fromtimestamp(start_time).isoformat()
+    }
 
 # --- Node Connection Test ---
 class NodePingRequest(BaseModel):
@@ -132,3 +147,12 @@ async def ping_node(req: NodePingRequest):
                 "error": str(e)
             }
         )
+
+# --- About Endpoint ---
+@app.get("/about")
+async def about():
+    return {
+        "identity": identity,
+        "access": {k: v for k, v in access.items() if "key" not in k.lower()},
+        "model_name": model_name
+    }
