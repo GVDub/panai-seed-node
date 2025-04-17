@@ -20,7 +20,7 @@ ollama_url = "http://localhost:11434/api/chat"
 
 # --- App Setup ---
 app = FastAPI(title=identity.get("node_name", "seed-node"))
-from memory_api.routes import router as memory_router
+from memory_api.memory_api import router as memory_router
 app.include_router(memory_router, prefix="/memory")
 
 # Make sure audit log folder exists
