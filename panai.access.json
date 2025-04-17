@@ -4,6 +4,7 @@
     "auth_method": "none",
     "log_interactions": true,
     "log_format": "markdown",
+    "ollama_url": "http://localhost:11434/api/chat",
     "rate_limit": {
         "requests_per_minute": 60,
         "burst": 10

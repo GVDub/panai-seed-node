@@ -30,6 +30,10 @@
             "llama3.2:latest"
         ]
     },
+    "warmup_models": [
+        "mistral-nemo",
+        "mistral"
+    ],
     "capabilities": [
         "conversation",
         "summarization",
