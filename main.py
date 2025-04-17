@@ -22,6 +22,21 @@ ollama_url = "http://localhost:11434/api/chat"
 app = FastAPI(title=identity.get("node_name", "seed-node"))
 from memory_api.memory_api import router as memory_router
 app.include_router(memory_router, prefix="/memory")
+@app.on_event("startup")
+async def preload_models():
+    import httpx
+    warmup_prompts = [
+        {"model": "mistral-nemo", "prompt": "Hello", "stream": False},
+        {"model": "mistral", "prompt": "Hello", "stream": False}
+    ]
+    async with httpx.AsyncClient(timeout=30.0) as client:
+        for p in warmup_prompts:
+            try:
+                response = await client.post("http://localhost:11434/api/generate", json=p)
+                response.raise_for_status()
+                print(f"[Startup] Model {p['model']} warmed up.")
+            except httpx.HTTPError as e:
+                print(f"[Startup] Warmup failed for {p['model']}: {e}")
 
 # Make sure audit log folder exists
 os.makedirs("audit_log", exist_ok=True)

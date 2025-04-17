@@ -24,35 +24,7 @@ client = QdrantClient(host="localhost", port=6333)
 # Load all-mpnet-base-v2 model for embedding (768-dimension)
 embed_model = SentenceTransformer("sentence-transformers/all-mpnet-base-v2")
 
-@app.on_event("startup")
-async def preload_models():
-    warmup_prompts = [
-        {"model": "mistral-nemo", "prompt": "Hello", "stream": False},
-        {"model": "mistral", "prompt": "Hello", "stream": False}
-    ]
-    async with httpx.AsyncClient(timeout=30.0) as client:
-        for p in warmup_prompts:
-            try:
-                response = await client.post("http://localhost:11434/api/generate", json=p)
-                response.raise_for_status()
-                print(f"[Startup] Model {p['model']} warmed up.")
-            except httpx.HTTPError as e:
-                print(f"[Startup] Warmup failed for {p['model']}: {e}")
 
-@app.on_event("startup")
-async def preload_models():
-    warmup_prompts = [
-        {"model": "mistral-nemo", "prompt": "Hello", "stream": False},
-        {"model": "mistral", "prompt": "Hello", "stream": False}
-    ]
-    async with httpx.AsyncClient(timeout=30.0) as client:
-        for p in warmup_prompts:
-            try:
-                response = await client.post("http://localhost:11434/api/generate", json=p)
-                response.raise_for_status()
-                print(f"[Startup] Model {p['model']} warmed up.")
-            except httpx.HTTPError as e:
-                print(f"[Startup] Warmup failed for {p['model']}: {e}")
 
 def embed_text(text: str) -> list:
     return embed_model.encode(text, normalize_embeddings=True).tolist()
