@@ -24,7 +24,7 @@ Pan-AI nodes are designed for:
 
 ## ✨ Features
 
-- 🌿 Runs locally with any [Ollama](https://ollama.com) model (tested with `llama3.2:latest`)
+- 🌿 Runs locally with any [Ollama](https://ollama.com) model (tested with `llama3.2:latest`, `mistral`, `mistral-nemo`, and embedding models like `all-MiniLM-L6-v2`)
 - ⚡ FastAPI wrapper with `/chat` endpoint and markdown-based audit logging
 - 🔍 Config-driven identity, memory, and access control
 - 📜 Durable journals of every conversation
