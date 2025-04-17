@@ -18,8 +18,16 @@ access = load_config("panai.access.json")
 model_name = identity.get("model", "llama3")
 ollama_url = "http://localhost:11434/api/chat"
 
-# --- App Setup ---
-app = FastAPI(title=identity.get("node_name", "seed-node"))
+## --- App Setup ---
+import socket
+
+def resolve_node_name(identity_json):
+    configured_name = identity_json.get("node_name")
+    if configured_name in [None, "", "auto"]:
+        return f"Seed-{socket.gethostname()}"
+    return configured_name
+
+app = FastAPI(title=resolve_node_name(identity))
 from memory_api.memory_api import router as memory_router
 app.include_router(memory_router, prefix="/memory")
 @app.on_event("startup")
@@ -99,7 +107,7 @@ async def chat(req: ChatRequest):
 # --- Node Health Check ---
 @app.get("/health")
 async def health_check():
-    return {"status": "ok", "node": identity.get("node_name", "seed-node")}
+    return {"status": "ok", "node": resolve_node_name(identity)}
 
 # --- Node Connection Test ---
 class NodePingRequest(BaseModel):
