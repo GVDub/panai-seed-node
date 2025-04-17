@@ -5,7 +5,7 @@ import uuid
 import httpx
 
 #third-party imports
-from fastapi import FastAPI
+from fastapi import FastAPI, APIRouter
 from pydantic import BaseModel
 from qdrant_client import QdrantClient
 from sentence_transformers import SentenceTransformer
@@ -14,7 +14,11 @@ import requests
 import torch
 torch.set_num_threads(14)  # Reserve 1–2 threads for system processes
 
-app = FastAPI()
+# router definition
+router = APIRouter()
+
+# app definition
+# app = FastAPI()
 client = QdrantClient(host="localhost", port=6333)
 
 # Load all-mpnet-base-v2 model for embedding (768-dimension)
@@ -131,7 +135,7 @@ class SummaryRequest(BaseModel):
     session_id: str
     limit: int = 20  # number of memories to summarize    
 
-@app.post("/search")
+@router.post("/search")
 def search_memory(request: QueryRequest):
     results = client.search(
         collection_name="panai_memory",
@@ -140,7 +144,7 @@ def search_memory(request: QueryRequest):
     )
     return {"results": [r.payload for r in results]}
 
-@app.post("/recall")
+@router.post("/recall")
 def recall_from_text(request: TextQuery):
     embedded_vector = embed_text(request.text)
     results = client.search(
@@ -151,7 +155,7 @@ def recall_from_text(request: TextQuery):
     return {"results": [r.payload for r in results]}
 
 
-@app.post("/search_by_tag")
+@router.post("/search_by_tag")
 def search_by_tag(request: TagQuery):
     results = client.scroll(
         collection_name="panai_memory",
@@ -169,12 +173,12 @@ class MemoryLog(BaseModel):
     session_id: str = "default"
     tags: List[str] = []
 
-@app.post("/log_memory")
+@router.post("/log_memory")
 def log_memory(entry: MemoryLog):
     log_generic_memory(entry.text, entry.session_id, entry.tags)
     return {"status": "🧠 Memory logged.", "session_id": entry.session_id}
 
-@app.post("/summarize")
+@router.post("/summarize")
 def summarize_session(request: SummaryRequest):
     # Pull matching memories
     results = client.scroll(
@@ -210,7 +214,7 @@ class ReflectRequest(BaseModel):
     session_id: str
     limit: int = 20
 
-@app.post("/reflect")
+@router.post("/reflect")
 async def reflect_on_session(request: ReflectRequest):
     prompt_template = (
         "Here is a series of memory logs from session '{session_id}':\n\n"
@@ -235,7 +239,7 @@ class AdviceRequest(BaseModel):
     session_id: str
     limit: int = 10
 
-@app.post("/advice")
+@router.post("/advice")
 async def give_advice(request: AdviceRequest):
     prompt_template = (
         "Based on these reflections from session '{session_id}':\n\n"
@@ -260,7 +264,7 @@ class PlanRequest(BaseModel):
     session_id: str
     limit: int = 10
 
-@app.post("/plan")
+@router.post("/plan")
 async def generate_plan(request: PlanRequest):
     prompt_template = (
         "Based on this advice history for session '{session_id}', "
@@ -284,7 +288,7 @@ class DreamRequest(BaseModel):
     session_id: str
     limit: int = 25
 
-@app.post("/dream")
+@router.post("/dream")
 async def dream_from_memory(request: DreamRequest):
     prompt_template = (
         "Here are some memories from session '{session_id}':\n\n"
@@ -318,7 +322,7 @@ class DreamLogRequest(BaseModel):
     session_id: str = "default"
     tags: List[str] = ["dream", "meta"]
 
-@app.post("/log_dream")
+@router.post("/log_dream")
 def log_dream(entry: DreamLogRequest):
     log_generic_memory(entry.text, entry.session_id, entry.tags)
     return {"status": "🌙 Dream logged.", "session_id": entry.session_id}
@@ -328,7 +332,7 @@ class ReflectionLogRequest(BaseModel):
     session_id: str = "default"
     tags: List[str] = ["reflection", "meta"]
 
-@app.post("/log_reflection")
+@router.post("/log_reflection")
 def log_reflection(entry: ReflectionLogRequest):
     log_generic_memory(entry.text, entry.session_id, entry.tags)
     return {"status": "🔍 Reflection logged.", "session_id": entry.session_id}
@@ -338,7 +342,7 @@ class AdviceLogRequest(BaseModel):
     session_id: str = "default"
     tags: List[str] = ["advice", "meta"]
 
-@app.post("/log_advice")
+@router.post("/log_advice")
 def log_advice(entry: AdviceLogRequest):
     log_generic_memory(entry.text, entry.session_id, entry.tags)
     return {"status": "💡 Advice logged.", "session_id": entry.session_id}
@@ -348,12 +352,12 @@ class PlanLogRequest(BaseModel):
     session_id: str = "default"
     tags: List[str] = ["plan", "meta"]
 
-@app.post("/log_plan")
+@router.post("/log_plan")
 def log_plan(entry: PlanLogRequest):
     log_generic_memory(entry.text, entry.session_id, entry.tags)
     return {"status": "🧭 Plan logged.", "session_id": entry.session_id}
 
-@app.post("/next")
+@router.post("/next")
 async def next_step(request: PlanRequest):
     prompt_template = (
         "Here’s recent advice from session '{session_id}':\n\n"
@@ -386,7 +390,7 @@ class JournalRequest(BaseModel):
     session_id: str
     entry: str
 
-@app.post("/journal")
+@router.post("/journal")
 def log_journal_entry(request: JournalRequest):
     log_generic_memory(request.entry, request.session_id, ["journal", "meta"])
     return {
