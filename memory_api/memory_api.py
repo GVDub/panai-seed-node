@@ -155,6 +155,10 @@ def log_memory(entry: MemoryLog):
     log_generic_memory(entry.text, entry.session_id, entry.tags)
     return {"status": "🧠 Memory logged.", "session_id": entry.session_id}
 
+@router.post("/store")
+def store_memory(entry: MemoryLog):
+    return log_memory(entry)
+
 @router.post("/summarize")
 def summarize_session(request: SummaryRequest):
     # Pull matching memories
