@@ -92,7 +92,11 @@ async def periodic_memory_sync():
     while True:
         peers = load_known_peers()
         for peer in peers.get("nodes", []):
-            url = peer.get("url")
+            hostname = peer.get("hostname")
+            if not hostname:
+                print(f"[Memory Sync] Skipping peer (no hostname): {peer}")
+                continue
+            url = f"http://{hostname}:8000"
             try:
                 async with httpx.AsyncClient(timeout=10.0) as client:
                     r = await client.post(f"{url}/memory/search_by_tag", json={"tags": ["shared", "federated"]})
@@ -104,7 +108,7 @@ async def periodic_memory_sync():
                         from memory_api.memory_api import store_synced_memory
                         store_synced_memory(entry)
             except Exception as e:
-                print(f"[Memory Sync] Failed to sync with {url}: {e}")
+                print(f"[Memory Sync] Failed to sync with {hostname}: {e}")
         await asyncio.sleep(1800)  # Sync every 30 minutes
 
 @app.on_event("startup")
