@@ -6,6 +6,9 @@ import os
 import requests
 from fastapi.responses import JSONResponse
 import time
+import asyncio
+import httpx
+
 start_time = time.time()
 
 # --- Config Loader ---
@@ -42,7 +45,7 @@ from memory_api.memory_api import router as memory_router
 app.include_router(memory_router, prefix="/memory")
 from mesh_api.mesh_api import router as mesh_router
 app.include_router(mesh_router, prefix="/mesh")
-@app.on_event("startup")
+
 async def preload_models():
     import httpx
     warmup_prompts = [
@@ -57,6 +60,37 @@ async def preload_models():
                 print(f"[Startup] Model {p['model']} warmed up.")
             except httpx.HTTPError as e:
                 print(f"[Startup] Warmup failed for {p['model']}: {e}")
+
+async def periodic_health_check():
+    await asyncio.sleep(10)  # Give server a moment to fully start
+    while True:
+        peers = load_known_peers()
+        updated = False
+        for peer in peers.get("nodes", []):
+            url = peer.get("url")
+            try:
+                async with httpx.AsyncClient(timeout=5.0) as client:
+                    r = await client.get(f"{url}/health")
+                    r.raise_for_status()
+                    health = r.json()
+                    peer["status"] = "ok"
+                    peer["last_seen"] = datetime.now().isoformat()
+                    peer["description"] = health.get("description", "")
+                    peer["capabilities"] = health.get("capabilities", [])
+                    peer["values"] = health.get("values", [])
+                    peer["models"] = health.get("models", {})
+                    updated = True
+            except Exception:
+                peer["status"] = "unreachable"
+        if updated:
+            with open("nodes.json", "w") as f:
+                json.dump(peers, f, indent=2)
+        await asyncio.sleep(900)  # 15 minutes
+
+@app.on_event("startup")
+async def startup_tasks():
+    asyncio.create_task(preload_models())
+    asyncio.create_task(periodic_health_check())
 
 # Make sure audit log folder exists
 os.makedirs("audit_log", exist_ok=True)
