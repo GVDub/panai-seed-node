@@ -52,9 +52,7 @@ def resolve_node_name(identity_json):
 
 app = FastAPI(title=resolve_node_name(identity))
 from memory_api.memory_api import router as memory_router
-from memory_api.memory_api import stats_router as memory_stats_router
 app.include_router(memory_router, prefix="/memory")
-app.include_router(memory_stats_router, prefix="/memory/admin")
 from mesh_api.mesh_api import router as mesh_router
 app.include_router(mesh_router, prefix="/mesh")
 
