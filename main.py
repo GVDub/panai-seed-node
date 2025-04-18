@@ -32,6 +32,8 @@ def resolve_node_name(identity_json):
 app = FastAPI(title=resolve_node_name(identity))
 from memory_api.memory_api import router as memory_router
 app.include_router(memory_router, prefix="/memory")
+from mesh_api.mesh_api import router as mesh_router
+app.include_router(mesh_router, prefix="/mesh")
 @app.on_event("startup")
 async def preload_models():
     import httpx
