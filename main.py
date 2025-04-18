@@ -57,8 +57,8 @@ def resolve_node_name(identity_json):
     return configured_name
 
 app = FastAPI(title=resolve_node_name(identity))
-app.include_router(memory_stats_router, prefix="/admin")
 app.include_router(memory_router, prefix="/memory")
+app.include_router(memory_stats_router, prefix="/memory")
 app.include_router(mesh_router, prefix="/mesh")
 
 async def preload_models():
