@@ -263,8 +263,10 @@ async def about():
         "model_name": model_name
     }
 
+from memory_api.memory_api import MemoryEntry  # import the correct model
+
 @app.post("/store")
-async def store_alias(req: ChatRequest):
+async def store_alias(req: MemoryEntry):
     return await log_memory(req)
 
 logger.info(f"[Startup] {resolve_node_name(identity)} is now live and ready.")
