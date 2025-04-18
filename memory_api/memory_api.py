@@ -5,7 +5,7 @@ import uuid
 import httpx
 
 #third-party imports
-from fastapi import FastAPI, APIRouter
+from fastapi import APIRouter
 from pydantic import BaseModel
 from qdrant_client import QdrantClient
 from sentence_transformers import SentenceTransformer
