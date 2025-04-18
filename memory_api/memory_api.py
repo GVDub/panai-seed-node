@@ -455,3 +455,19 @@ def store_synced_memory(entry: dict):
     }
     client.upsert(collection_name="panai_memory", points=[point])
     print(f"[Memory Sync] Stored: {text[:40]}...")
+
+@router.get("/admin/memory_stats")
+def memory_stats():
+    try:
+        count = client.count(collection_name="panai_memory", exact=True).count
+        return {
+            "collection": "panai_memory",
+            "total_memories": count,
+            "status": "ok"
+        }
+    except Exception as e:
+        return {
+            "collection": "panai_memory",
+            "status": "error",
+            "message": str(e)
+        }
