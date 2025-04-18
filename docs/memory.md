@@ -41,6 +41,7 @@ These services are consumed by the main FastAPI app, enabling easier extension, 
 - `POST /dream`: Generate a creative, speculative narrative
 - `POST /journal`: Capture a natural-language digest of a session
 - `POST /next`: Identify the most important next step
+- `GET /memory/admin/memory_stats`: View memory usage statistics and peer sync status
 
 ## File Location
 

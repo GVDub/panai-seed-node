@@ -144,6 +144,7 @@ The `memory/` directory contains an optional, self-hosted memory system built wi
 - `POST /recall` – Retrieve relevant memories using natural language
 - `POST /summarize`, `/reflect`, `/advice`, `/dream` – Generate context-aware insights
 - `POST /journal` – Synthesize a daily summary of thought
+- `GET /memory/admin/memory_stats` – Returns a summary of current memory count and indexed tags
 
 To use it, see [`memory/README.md`](memory/README.md) for setup instructions and examples.
 
