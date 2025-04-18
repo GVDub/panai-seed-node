@@ -77,7 +77,8 @@ async def periodic_health_check():
         peers = load_known_peers()
         updated = False
         for peer in peers.get("nodes", []):
-            url = peer.get("url")
+            url = peer.get("url") or f"http://{peer.get('hostname')}:8000"
+            logger.debug(f"[Health Check] Using URL: {url} for peer: {peer.get('hostname')}")
             try:
                 async with httpx.AsyncClient(timeout=5.0) as client:
                     r = await client.get(f"{url}/health")
@@ -110,7 +111,8 @@ async def periodic_memory_sync():
             if not hostname:
                 logger.warning(f"[Memory Sync] Skipping peer (no hostname): {peer}")
                 continue
-            url = f"http://{hostname}:8000"
+            url = peer.get("url") or f"http://{hostname}:8000"
+            logger.debug(f"[Memory Sync] Using URL: {url} for peer: {hostname}")
             try:
                 async with httpx.AsyncClient(timeout=10.0) as client:
                     r = await client.post(f"{url}/memory/search_by_tag", json={"tags": ["shared", "federated"]})
