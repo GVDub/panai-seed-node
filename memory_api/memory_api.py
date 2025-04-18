@@ -38,7 +38,7 @@ def log_generic_memory(text: str, session_id: str, tags: List[str]):
             "text": text,
             "timestamp": datetime.utcnow().isoformat(),
             "session_id": session_id,
-            "tags": tags,
+            "tags": list(set(tags + [session_id])),
         }
     }
     client.upsert(collection_name="panai_memory", points=[point])
