@@ -11,16 +11,17 @@ NODES_FILE = "nodes.json"
 def load_known_peers():
     try:
         with open(NODES_FILE, "r") as f:
-            return json.load(f)
+            data = json.load(f)
+            return data.get("nodes", [])
     except FileNotFoundError:
         return []
 
 def save_peer(peer_entry):
-    peers = load_known_peers()
-    if not any(p["url"] == peer_entry["url"] for p in peers):
-        peers.append(peer_entry)
+    data = {"nodes": load_known_peers()}
+    if not any(p["url"] == peer_entry["url"] for p in data["nodes"]):
+        data["nodes"].append(peer_entry)
         with open(NODES_FILE, "w") as f:
-            json.dump(peers, f, indent=2)
+            json.dump(data, f, indent=2)
 
 @router.post("/mesh/register_peer")
 async def register_peer(peer_data: dict):
@@ -41,6 +42,7 @@ async def register_peer(peer_data: dict):
 
 @router.get("/mesh/peers")
 async def list_peers():
-    return {peer.get("name", "unknown"): peer for peer in load_known_peers()}
+    peers = load_known_peers()
+    return {peer.get("name", "unknown"): peer for peer in peers}
 
 app.include_router(router)

@@ -1,0 +1,38 @@
+
+
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "PanAI Mesh Node Registry",
+  "type": "object",
+  "properties": {
+    "nodes": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["url", "name"],
+        "properties": {
+          "url": { "type": "string", "format": "uri" },
+          "name": { "type": "string" },
+          "description": { "type": "string" },
+          "version": { "type": "string" },
+          "capabilities": {
+            "type": "array",
+            "items": { "type": "string" }
+          },
+          "values": {
+            "type": "array",
+            "items": { "type": "string" }
+          },
+          "models": {
+            "type": "object",
+            "additionalProperties": { "type": "string" }
+          },
+          "ip": { "type": "string", "format": "ipv4" },
+          "last_seen": { "type": "string", "format": "date-time" },
+          "status": { "type": "string" }
+        }
+      }
+    }
+  },
+  "required": ["nodes"]
+}

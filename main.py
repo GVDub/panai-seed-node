@@ -155,8 +155,7 @@ async def ping_node(req: NodePingRequest):
 
         if not any(p["url"] == peer_entry["url"] for p in known_peers):
             known_peers.append(peer_entry)
-            with open("nodes.json", "w") as f:
-                json.dump(known_peers, f, indent=2)
+            save_peer(peer_entry)
 
         return {
             "reachable": True,
