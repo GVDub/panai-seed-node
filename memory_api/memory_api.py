@@ -480,5 +480,6 @@ def memory_stats():
             "status": "error",
             "message": str(e)
         }
+stats_router = router
 
-__all__ = ["router", "log_memory", "store_synced_memory", "MemoryEntry"]
+__all__ = ["router", "log_memory", "store_synced_memory", "MemoryEntry", "stats_router"]
