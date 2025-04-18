@@ -1,15 +1,22 @@
 from fastapi import FastAPI
+from fastapi.responses import JSONResponse
 from pydantic import BaseModel
 from datetime import datetime
-import json
-import os
-import requests
-from fastapi.responses import JSONResponse
-import time
 import asyncio
 import httpx
-
+import json
 import logging
+import os
+import requests
+import socket
+import time
+
+from memory_api.memory_api import log_memory
+from memory_api.memory_api import MemoryEntry
+from memory_api.memory_api import memory_stats
+from memory_api.memory_api import router as memory_router
+from memory_api.memory_api import stats_router as memory_stats_router
+from mesh_api.mesh_api import router as mesh_router
 
 logging.basicConfig(
     filename="server.log",
@@ -42,7 +49,6 @@ model_name = identity.get("model", "llama3.2:latest")
 ollama_url = access.get("ollama_url", "http://localhost:11434/api/chat")
 
 ## --- App Setup ---
-import socket
 
 def resolve_node_name(identity_json):
     configured_name = identity_json.get("node_name")
@@ -51,14 +57,8 @@ def resolve_node_name(identity_json):
     return configured_name
 
 app = FastAPI(title=resolve_node_name(identity))
-from memory_api.memory_api import router as memory_router
-from memory_api.memory_api import log_memory
-from memory_api.memory_api import MemoryEntry
-from memory_api.memory_api import stats_router as memory_stats_router
-from memory_api.memory_api import memory_stats
 app.include_router(memory_stats_router, prefix="/admin")
 app.include_router(memory_router, prefix="/memory")
-from mesh_api.mesh_api import router as mesh_router
 app.include_router(mesh_router, prefix="/mesh")
 
 async def preload_models():
