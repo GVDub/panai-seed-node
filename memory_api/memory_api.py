@@ -138,7 +138,7 @@ def search_by_tag(request: TagQuery):
         },
         limit=request.limit
     )
-    return {"results": [r.payload for r in results]}
+    return {"results": results[0]}
 
 class MemoryLog(BaseModel):
     text: str
