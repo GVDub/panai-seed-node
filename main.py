@@ -137,6 +137,7 @@ async def startup_tasks():
     asyncio.create_task(preload_models())
     asyncio.create_task(periodic_health_check())
     asyncio.create_task(periodic_memory_sync())
+    logger.info("[Startup] All background tasks launched. Monitoring peers and memory sync.")
 
 # Make sure audit log folder exists
 os.makedirs("audit_log", exist_ok=True)
@@ -260,3 +261,5 @@ async def about():
         "access": {k: v for k, v in access.items() if "key" not in k.lower()},
         "model_name": model_name
     }
+
+logger.info(f"[Startup] {resolve_node_name(identity)} is now live and ready.")
