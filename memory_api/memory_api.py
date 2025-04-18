@@ -410,3 +410,48 @@ async def sync_with_peer(req: SyncRequest):
         "attempted": len(matching),
         "synced": successes
     }
+
+def store_synced_memory(entry: dict):
+    """Store a memory entry from a peer, avoiding duplicates by hash of text + session_id."""
+    import hashlib
+
+    text = entry.get("text", "")
+    session_id = entry.get("session_id", "default")
+    tags = entry.get("tags", [])
+
+    if not text:
+        return
+
+    # Simple deduplication by content/session hash
+    content_hash = hashlib.sha256((text + session_id).encode()).hexdigest()
+
+    # Check if a memory with same hash exists
+    existing = client.scroll(
+        collection_name="panai_memory",
+        scroll_filter={
+            "must": [
+                {"key": "session_id", "match": {"value": session_id}},
+                {"key": "text", "match": {"value": text}}
+            ]
+        },
+        limit=1
+    )
+
+    if existing[0]:
+        print(f"[Memory Sync] Skipping duplicate: {text[:40]}...")
+        return
+
+    # Otherwise, embed and store it
+    vector = embed_text(text)
+    point = {
+        "id": str(uuid.uuid4()),
+        "vector": vector,
+        "payload": {
+            "text": text,
+            "timestamp": datetime.utcnow().isoformat(),
+            "session_id": session_id,
+            "tags": tags
+        }
+    }
+    client.upsert(collection_name="panai_memory", points=[point])
+    print(f"[Memory Sync] Stored: {text[:40]}...")

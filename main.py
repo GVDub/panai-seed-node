@@ -87,10 +87,31 @@ async def periodic_health_check():
                 json.dump(peers, f, indent=2)
         await asyncio.sleep(900)  # 15 minutes
 
+async def periodic_memory_sync():
+    await asyncio.sleep(30)  # Let health checks stabilize
+    while True:
+        peers = load_known_peers()
+        for peer in peers.get("nodes", []):
+            url = peer.get("url")
+            try:
+                async with httpx.AsyncClient(timeout=10.0) as client:
+                    r = await client.post(f"{url}/memory/search_by_tag", json={"tags": ["shared", "federated"]})
+                    r.raise_for_status()
+                    remote_entries = r.json().get("results", [])
+
+                    for entry in remote_entries:
+                        # Will call into memory_api later for deduplication and storage
+                        from memory_api.memory_api import store_synced_memory
+                        store_synced_memory(entry)
+            except Exception as e:
+                print(f"[Memory Sync] Failed to sync with {url}: {e}")
+        await asyncio.sleep(1800)  # Sync every 30 minutes
+
 @app.on_event("startup")
 async def startup_tasks():
     asyncio.create_task(preload_models())
     asyncio.create_task(periodic_health_check())
+    asyncio.create_task(periodic_memory_sync())
 
 # Make sure audit log folder exists
 os.makedirs("audit_log", exist_ok=True)
