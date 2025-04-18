@@ -53,6 +53,7 @@ def resolve_node_name(identity_json):
 app = FastAPI(title=resolve_node_name(identity))
 from memory_api.memory_api import router as memory_router
 from memory_api.memory_api import log_memory
+from memory_api.memory_api import MemoryEntry
 app.include_router(memory_router, prefix="/memory")
 from mesh_api.mesh_api import router as mesh_router
 app.include_router(mesh_router, prefix="/mesh")
@@ -262,8 +263,6 @@ async def about():
         "access": {k: v for k, v in access.items() if "key" not in k.lower()},
         "model_name": model_name
     }
-
-from memory_api.memory_api import MemoryEntry  # import the correct model
 
 @app.post("/store")
 async def store_alias(req: MemoryEntry):
