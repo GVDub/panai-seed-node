@@ -38,7 +38,7 @@ def log_generic_memory(text: str, session_id: str, tags: List[str]):
             "text": text,
             "timestamp": datetime.utcnow().isoformat(),
             "session_id": session_id,
-            "tags": list(set(tags + [session_id])),
+            "tags": list(set(tag.lower() for tag in tags + [session_id])),
         }
     }
     client.upsert(collection_name="panai_memory", points=[point])
@@ -138,7 +138,7 @@ def search_by_tag(request: TagQuery):
         collection_name="panai_memory",
         scroll_filter={
             "must": [
-                *([{"key": "tags", "match": {"value": tag}} for tag in request.tags] if request.tags else [])
+                *([{"key": "tags", "match": {"value": tag.lower()}} for tag in request.tags] if request.tags else [])
             ]
         },
         limit=request.limit
