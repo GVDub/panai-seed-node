@@ -100,7 +100,7 @@ class TextQuery(BaseModel):
     limit: int = 1
 
 class TagQuery(BaseModel):
-    tag: str
+    tags: List[str]
     limit: int = 5
     
 class SummaryRequest(BaseModel):
@@ -133,12 +133,12 @@ def search_by_tag(request: TagQuery):
         collection_name="panai_memory",
         scroll_filter={
             "must": [
-                {"key": "tags", "match": {"value": request.tag}}
+                *([{"key": "tags", "match": {"value": tag}} for tag in request.tags] if request.tags else [])
             ]
         },
         limit=request.limit
     )
-    return {"results": results[0]}
+    return {"results": [r.payload for r in results[0]]}
 
 class MemoryLog(BaseModel):
     text: str
