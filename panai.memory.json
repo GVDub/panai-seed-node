@@ -16,6 +16,7 @@
       "embedding_model": "bge-small-en",
       "vector_db": "qdrant",
       "default_tags": ["meta"],
-      "max_tokens": 2048
+      "max_tokens": 2048,
+      "sync_interval_seconds": 300
     }
 }

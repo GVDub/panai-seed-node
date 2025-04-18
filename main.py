@@ -135,7 +135,7 @@ async def periodic_memory_sync():
                 logger.error(f"[Memory Sync] Failed to sync with {hostname}: {e}")
         logger.info(f"[Memory Sync] Completed sync cycle with {len(peers.get('nodes', []))} peers.")
         logger.info(f"[Memory Sync] Memory sync stats: " + ", ".join(f"{p.get('hostname', 'unknown')}: {p.get('status', 'unknown')}" for p in peers.get("nodes", [])))
-        await asyncio.sleep(1800)  # Sync every 30 minutes
+        await asyncio.sleep(300)  # Sync every 5 minutes
 
 @app.on_event("startup")
 async def startup_tasks():
