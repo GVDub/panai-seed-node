@@ -17,6 +17,14 @@ identity = load_config("panai.identity.json")
 memory = load_config("panai.memory.json")
 access = load_config("panai.access.json")
 
+def load_known_peers():
+    try:
+        with open("nodes.json", "r") as f:
+            return json.load(f)
+    except FileNotFoundError:
+        return []
+known_peers = load_known_peers()
+
 model_name = identity.get("model", "llama3")
 ollama_url = access.get("ollama_url", "http://localhost:11434/api/chat")
 
@@ -135,10 +143,25 @@ async def ping_node(req: NodePingRequest):
     try:
         r = requests.get(f"{req.target_url}/health", timeout=5)
         r.raise_for_status()
+        peer_info = r.json()
+        peer_entry = {
+            "url": req.target_url,
+            "name": peer_info.get("node", "unknown"),
+            "description": peer_info.get("description", ""),
+            "version": peer_info.get("version", ""),
+            "capabilities": peer_info.get("capabilities", []),
+            "values": peer_info.get("values", [])
+        }
+
+        if not any(p["url"] == peer_entry["url"] for p in known_peers):
+            known_peers.append(peer_entry)
+            with open("nodes.json", "w") as f:
+                json.dump(known_peers, f, indent=2)
+
         return {
             "reachable": True,
             "target_url": req.target_url,
-            "response": r.json()
+            "response": peer_info
         }
     except Exception as e:
         return JSONResponse(
