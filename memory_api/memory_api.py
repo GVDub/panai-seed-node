@@ -91,6 +91,11 @@ async def query_and_generate_async(session_id: str, tags: List[str], prompt_temp
             print(f"[ERROR] HTTP error during LLM call: {e}")
             return f"❌ Error from language model: {e}"
 
+class MemoryEntry(BaseModel):
+    text: str
+    session_id: str = "default"
+    tags: List[str] = []
+
 class QueryRequest(BaseModel):
     vector: list
     limit: int = 1
@@ -471,3 +476,5 @@ def memory_stats():
             "status": "error",
             "message": str(e)
         }
+
+__all__ = ["router", "log_memory", "store_synced_memory", "MemoryEntry"]
