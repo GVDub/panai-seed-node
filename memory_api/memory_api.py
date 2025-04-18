@@ -369,3 +369,44 @@ def log_journal_entry(request: JournalRequest):
         "status": "📓 Journal entry logged.",
         "session_id": request.session_id
     }
+
+class SyncRequest(BaseModel):
+    peer_url: str
+    tags: List[str] = []
+    session_id: str | None = None
+    limit: int = 10
+
+@router.post("/sync_with_peer")
+async def sync_with_peer(req: SyncRequest):
+    matching = []
+    for point in client.scroll(
+        collection_name="panai_memory",
+        scroll_filter={
+            "must": [
+                *([{"key": "session_id", "match": {"value": req.session_id}}] if req.session_id else []),
+                *([{"key": "tags", "match": {"value": tag}} for tag in req.tags] if req.tags else [])
+            ]
+        },
+        limit=req.limit
+    )[0]:
+        matching.append({
+            "text": point.payload["text"],
+            "session_id": point.payload["session_id"],
+            "tags": point.payload.get("tags", [])
+        })
+
+    successes = 0
+    async with httpx.AsyncClient(timeout=10.0) as client_async:
+        for entry in matching:
+            try:
+                res = await client_async.post(f"{req.peer_url}/memory/log_memory", json=entry)
+                res.raise_for_status()
+                successes += 1
+            except Exception as e:
+                print(f"Failed to sync memory entry: {e}")
+
+    return {
+        "peer": req.peer_url,
+        "attempted": len(matching),
+        "synced": successes
+    }
