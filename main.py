@@ -26,7 +26,7 @@ import socket
 def resolve_node_name(identity_json):
     configured_name = identity_json.get("node_name")
     if configured_name in [None, "", "auto"]:
-        return f"Seed-{socket.gethostname()}"
+        return f"Seed-{socket.gethostname()}.local"
     return configured_name
 
 app = FastAPI(title=resolve_node_name(identity))
