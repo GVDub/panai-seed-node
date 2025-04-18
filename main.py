@@ -9,6 +9,16 @@ import time
 import asyncio
 import httpx
 
+import logging
+
+logging.basicConfig(
+    filename="server.log",
+    level=logging.INFO,
+    format="%(asctime)s [%(levelname)s] %(message)s",
+)
+
+logger = logging.getLogger(__name__)
+
 start_time = time.time()
 
 # --- Config Loader ---
@@ -57,9 +67,9 @@ async def preload_models():
             try:
                 response = await client.post("http://localhost:11434/api/generate", json=p)
                 response.raise_for_status()
-                print(f"[Startup] Model {p['model']} warmed up.")
+                logger.info(f"[Startup] Model {p['model']} warmed up.")
             except httpx.HTTPError as e:
-                print(f"[Startup] Warmup failed for {p['model']}: {e}")
+                logger.error(f"[Startup] Warmup failed for {p['model']}: {e}")
 
 async def periodic_health_check():
     await asyncio.sleep(10)  # Give server a moment to fully start
@@ -82,9 +92,13 @@ async def periodic_health_check():
                     updated = True
             except Exception:
                 peer["status"] = "unreachable"
+                logger.warning(f"[Health Check] Peer unreachable: {peer.get('hostname', 'unknown')} ({url})")
+                logger.info(f"[Health Check] {peer.get('hostname', 'unknown')} status: {peer['status']}")
         if updated:
             with open("nodes.json", "w") as f:
                 json.dump(peers, f, indent=2)
+        logger.info(f"[Health Check] Peer statuses: " + ", ".join(f"{p.get('hostname', 'unknown')}: {p.get('status', 'unknown')}" for p in peers.get("nodes", [])))
+        logger.info("[Health Check] Completed round of peer health checks.")
         await asyncio.sleep(900)  # 15 minutes
 
 async def periodic_memory_sync():
@@ -94,7 +108,7 @@ async def periodic_memory_sync():
         for peer in peers.get("nodes", []):
             hostname = peer.get("hostname")
             if not hostname:
-                print(f"[Memory Sync] Skipping peer (no hostname): {peer}")
+                logger.warning(f"[Memory Sync] Skipping peer (no hostname): {peer}")
                 continue
             url = f"http://{hostname}:8000"
             try:
@@ -102,13 +116,18 @@ async def periodic_memory_sync():
                     r = await client.post(f"{url}/memory/search_by_tag", json={"tags": ["shared", "federated"]})
                     r.raise_for_status()
                     remote_entries = r.json().get("results", [])
+                    logger.info(f"[Memory Sync] Retrieved {len(remote_entries)} entries from {hostname}")
+                    if len(remote_entries) == 0:
+                        logger.warning(f"[Memory Sync] No entries retrieved from {hostname}.")
 
                     for entry in remote_entries:
                         # Will call into memory_api later for deduplication and storage
                         from memory_api.memory_api import store_synced_memory
                         store_synced_memory(entry)
             except Exception as e:
-                print(f"[Memory Sync] Failed to sync with {hostname}: {e}")
+                logger.error(f"[Memory Sync] Failed to sync with {hostname}: {e}")
+        logger.info(f"[Memory Sync] Completed sync cycle with {len(peers.get('nodes', []))} peers.")
+        logger.info(f"[Memory Sync] Memory sync stats: " + ", ".join(f"{p.get('hostname', 'unknown')}: {p.get('status', 'unknown')}" for p in peers.get("nodes", [])))
         await asyncio.sleep(1800)  # Sync every 30 minutes
 
 @app.on_event("startup")
