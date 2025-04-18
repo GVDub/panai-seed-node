@@ -28,7 +28,7 @@ def load_known_peers():
         return []
 known_peers = load_known_peers()
 
-model_name = identity.get("model", "llama3")
+model_name = identity.get("model", "llama3.2:latest")
 ollama_url = access.get("ollama_url", "http://localhost:11434/api/chat")
 
 ## --- App Setup ---
