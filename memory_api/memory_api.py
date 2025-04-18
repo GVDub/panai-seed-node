@@ -393,7 +393,7 @@ async def sync_with_peer(req: SyncRequest):
         scroll_filter={
             "must": [
                 *([{"key": "session_id", "match": {"value": req.session_id}}] if req.session_id else []),
-                *([{"key": "tags", "match": {"value": tag}} for tag in req.tags] if req.tags else [])
+                *([{"key": "tags", "match": {"value": tag.lower()}} for tag in req.tags] if req.tags else [])
             ]
         },
         limit=req.limit
