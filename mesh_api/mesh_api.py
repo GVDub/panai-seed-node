@@ -3,7 +3,7 @@ from datetime import datetime
 import json
 import os
 
-router = APIRouter()
+mesh_router = APIRouter()
 
 NODES_FILE = "nodes.json"
 CHAT_LOG_FILE = "mesh_chat_log.jsonl"
@@ -27,7 +27,7 @@ def log_chat_to_mesh(chat_entry):
     with open(CHAT_LOG_FILE, "a") as f:
         f.write(json.dumps(chat_entry) + "\n")
 
-@router.post("/mesh/register_peer")
+@mesh_router.post("/mesh/register_peer")
 async def register_peer(peer_data: dict):
     peer_entry = {
         "url": peer_data.get("url"),
@@ -44,12 +44,12 @@ async def register_peer(peer_data: dict):
     save_peer(peer_entry)
     return {"message": f"Peer {peer_entry['name']} registered"}
 
-@router.get("/mesh/peers")
+@mesh_router.get("/mesh/peers")
 async def list_peers():
     peers = load_known_peers()
     return {peer.get("name", "unknown"): peer for peer in peers}
 
-@router.post("/mesh/log_chat")
+@mesh_router.post("/mesh/log_chat")
 async def log_chat(chat_data: dict):
     log_chat_to_mesh(chat_data)
     print(f"[DEBUG] Chat data received in /mesh/log_chat:\n{json.dumps(chat_data, indent=2)}")
@@ -63,4 +63,4 @@ async def log_chat(chat_data: dict):
     print("[DEBUG] Finished processing /mesh/log_chat request.")
     return {"message": "Chat entry logged to mesh"}
 
-mesh_router = router
+router = mesh_router
