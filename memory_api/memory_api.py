@@ -414,11 +414,11 @@ async def sync_with_peer(req: SyncRequest):
     async with httpx.AsyncClient(timeout=10.0) as client_async:
         for entry in matching:
             try:
-            # Ensure peer_url has scheme without mutating the request object
-            peer_endpoint = req.peer_url
-            if not peer_endpoint.startswith("http://") and not peer_endpoint.startswith("https://"):
-                peer_endpoint = f"http://{peer_endpoint}"
-            res = await client_async.post(f"{peer_endpoint}/memory/log_memory", json=entry)
+                # Begin constructing peer endpoint
+                peer_endpoint = req.peer_url
+                if not peer_endpoint.startswith("http://") and not peer_endpoint.startswith("https://"):
+                    peer_endpoint = f"http://{peer_endpoint}"
+                res = await client_async.post(f"{peer_endpoint}/memory/log_memory", json=entry)
                 res.raise_for_status()
                 successes += 1
             except Exception as e:
