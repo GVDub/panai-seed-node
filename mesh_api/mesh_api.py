@@ -1,4 +1,4 @@
-from fastapi import FastAPI, APIRouter
+from fastapi import APIRouter
 from datetime import datetime
 import json
 import os
@@ -62,3 +62,5 @@ async def log_chat(chat_data: dict):
         print(f"[WARN] Could not log chat to memory: {e}")
     print("[DEBUG] Finished processing /mesh/log_chat request.")
     return {"message": "Chat entry logged to mesh"}
+
+mesh_router = router
