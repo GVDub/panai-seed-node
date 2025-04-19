@@ -56,7 +56,11 @@ async def log_chat(chat_data: dict):
     try:
         from memory_api.memory_api import log_memory
         print(f"[DEBUG] Logging chat to memory: {json.dumps(chat_data, indent=2)}")
-        log_memory(chat_data)
+        log_memory(
+            text=chat_data.get("text"),
+            session_id=chat_data.get("session_id"),
+            tags=chat_data.get("tags", [])
+        )
         print("[DEBUG] Chat successfully logged to memory.")
     except Exception as e:
         print(f"[WARN] Could not log chat to memory: {e}")
