@@ -408,6 +408,9 @@ async def sync_with_peer(req: SyncRequest):
     async with httpx.AsyncClient(timeout=10.0) as client_async:
         for entry in matching:
             try:
+                # Ensure peer_url has scheme
+                if not req.peer_url.startswith("http://") and not req.peer_url.startswith("https://"):
+                    req.peer_url = f"http://{req.peer_url}"
                 res = await client_async.post(f"{req.peer_url}/memory/log_memory", json=entry)
                 res.raise_for_status()
                 successes += 1
