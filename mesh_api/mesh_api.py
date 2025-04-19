@@ -7,6 +7,7 @@ app = FastAPI()
 router = APIRouter()
 
 NODES_FILE = "nodes.json"
+CHAT_LOG_FILE = "mesh_chat_log.jsonl"
 
 def load_known_peers():
     try:
@@ -22,6 +23,10 @@ def save_peer(peer_entry):
         data["nodes"].append(peer_entry)
         with open(NODES_FILE, "w") as f:
             json.dump(data, f, indent=2)
+
+def log_chat_to_mesh(chat_entry):
+    with open(CHAT_LOG_FILE, "a") as f:
+        f.write(json.dumps(chat_entry) + "\n")
 
 @router.post("/mesh/register_peer")
 async def register_peer(peer_data: dict):
@@ -44,5 +49,15 @@ async def register_peer(peer_data: dict):
 async def list_peers():
     peers = load_known_peers()
     return {peer.get("name", "unknown"): peer for peer in peers}
+
+@router.post("/mesh/log_chat")
+async def log_chat(chat_data: dict):
+    log_chat_to_mesh(chat_data)
+    try:
+        from memory_api.memory_api import log_memory
+        log_memory(chat_data)
+    except Exception as e:
+        print(f"[WARN] Could not log chat to memory: {e}")
+    return {"message": "Chat entry logged to mesh"}
 
 app.include_router(router)

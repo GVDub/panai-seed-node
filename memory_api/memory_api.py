@@ -497,6 +497,11 @@ def memory_stats():
             "status": "error",
             "message": str(e)
         }
+@router.post("/mesh/log_chat")
+def log_chat_to_mesh(entry: MemoryEntry):
+    log_generic_memory(entry.text, entry.session_id, entry.tags)
+    return {"status": "🌐 Chat memory logged to mesh.", "session_id": entry.session_id}
+
 stats_router = router
 
-__all__ = ["router", "log_memory", "store_synced_memory", "MemoryEntry", "stats_router"]
+__all__ = ["router", "log_memory", "store_synced_memory", "MemoryEntry", "stats_router", "log_chat_to_mesh"]

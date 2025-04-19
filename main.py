@@ -178,6 +178,18 @@ def log_interaction(prompt, response, tags):
     log_file = f"audit_log/{datetime.now().strftime('%Y-%m-%d')}.md"
     with open(log_file, "a") as f:
         f.write(log_entry)
+    
+    # Also log to memory system
+    try:
+        memory_entry = MemoryEntry(
+            text=f"**Prompt:** {prompt}\n\n**Response:** {response}",
+            session_id=f"chat-{datetime.now().strftime('%Y%m%d-%H%M%S')}",
+            tags=tags + ["chat", "shared"]
+        )
+        import asyncio
+        asyncio.create_task(log_memory(memory_entry))
+    except Exception as e:
+        logger.warning(f"[Audit] Failed to log memory from chat: {e}")
 
 # --- Chat Endpoint ---
 @app.post("/chat", response_model=ChatResponse)
