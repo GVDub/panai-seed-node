@@ -53,11 +53,15 @@ async def list_peers():
 @router.post("/mesh/log_chat")
 async def log_chat(chat_data: dict):
     log_chat_to_mesh(chat_data)
+    print(f"[DEBUG] Chat data received in /mesh/log_chat:\n{json.dumps(chat_data, indent=2)}")
     try:
         from memory_api.memory_api import log_memory
+        print(f"[DEBUG] Logging chat to memory: {json.dumps(chat_data, indent=2)}")
         log_memory(chat_data)
+        print("[DEBUG] Chat successfully logged to memory.")
     except Exception as e:
         print(f"[WARN] Could not log chat to memory: {e}")
+    print("[DEBUG] Finished processing /mesh/log_chat request.")
     return {"message": "Chat entry logged to mesh"}
 
 app.include_router(router)
