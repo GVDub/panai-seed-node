@@ -420,12 +420,15 @@ async def sync_with_peer(req: SyncRequest):
     successes = 0
     async with httpx.AsyncClient(timeout=10.0) as client_async:
         for entry in matching:
+            print(f"[DEBUG] Syncing memory to {req.peer_url} - session: {entry['session_id']}, text: {entry['text'][:50]}")
+            print(f"[DEBUG] Payload: {entry}")
             try:
                 # Begin constructing peer endpoint
                 peer_endpoint = req.peer_url
                 if not peer_endpoint.startswith("http://") and not peer_endpoint.startswith("https://"):
                     peer_endpoint = f"http://{peer_endpoint}"
                 res = await client_async.post(f"{peer_endpoint}/memory/log_memory", json=entry)
+                print(f"[DEBUG] Response status: {res.status_code}, content: {res.text}")
                 res.raise_for_status()
                 successes += 1
             except Exception as e:

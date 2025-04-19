@@ -13,3 +13,4 @@ audit_log/
 
 # Mac-specific
 .DS_Store
+mesh_chat_log.jsonl
