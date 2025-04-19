@@ -398,6 +398,7 @@ async def sync_with_peer(req: SyncRequest):
         scroll_filter["must"] = must_conditions
 
     print(f"[DEBUG] Sync scroll filter: {scroll_filter}")
+    print(f"[DEBUG] Using Qdrant client: {client}")
 
     for point in client.scroll(
         collection_name="panai_memory",
