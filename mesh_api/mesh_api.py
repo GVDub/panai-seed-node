@@ -4,7 +4,8 @@ import json
 import os
 
 app = FastAPI()
-router = APIRouter()
+from mesh_api.mesh_api import router as mesh_router
+app.include_router(mesh_router)
 
 NODES_FILE = "nodes.json"
 CHAT_LOG_FILE = "mesh_chat_log.jsonl"
@@ -63,5 +64,3 @@ async def log_chat(chat_data: dict):
         print(f"[WARN] Could not log chat to memory: {e}")
     print("[DEBUG] Finished processing /mesh/log_chat request.")
     return {"message": "Chat entry logged to mesh"}
-
-app.include_router(router)
