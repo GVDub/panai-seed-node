@@ -16,7 +16,8 @@ from memory_api.memory_api import MemoryEntry
 from memory_api.memory_api import memory_stats
 from memory_api.memory_api import router as memory_router
 from memory_api.memory_api import stats_router as memory_stats_router
-from mesh_api.mesh_api import router as mesh_router
+## from mesh_api.mesh_api import router as mesh_router
+from mesh_api.mesh_api import mesh_router
 
 logging.basicConfig(
     filename="server.log",
@@ -59,6 +60,7 @@ def resolve_node_name(identity_json):
 app = FastAPI(title=resolve_node_name(identity))
 app.include_router(memory_router, prefix="/memory")
 app.include_router(memory_stats_router, prefix="/memory")
+## app.include_router(mesh_router, prefix="/mesh")
 app.include_router(mesh_router, prefix="/mesh")
 
 async def preload_models():

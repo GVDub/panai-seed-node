@@ -5,9 +5,6 @@ import os
 
 router = APIRouter()
 
-app = FastAPI()
-app.include_router(router)
-
 NODES_FILE = "nodes.json"
 CHAT_LOG_FILE = "mesh_chat_log.jsonl"
 
