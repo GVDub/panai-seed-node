@@ -103,7 +103,8 @@ async def periodic_health_check():
         if updated:
             with open("nodes.json", "w") as f:
                 json.dump(peers, f, indent=2)
-        logger.info(f"[Health Check] Peer statuses: " + ", ".join(f"{p.get('hostname', 'unknown')}: {p.get('status', 'unknown')}" for p in peers.get("nodes", [])))
+        peer_statuses = ", ".join(f"{p.get('hostname', 'unknown')}: {p.get('status', 'unknown')}" for p in peers.get("nodes", []))
+        logger.info(f"[Health Check] Peer statuses: {peer_statuses}")
         logger.info("[Health Check] Completed round of peer health checks.")
         await asyncio.sleep(900)  # 15 minutes
 

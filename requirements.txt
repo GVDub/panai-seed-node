@@ -15,7 +15,8 @@ starlette==0.46.1
 typing_extensions==4.12.2
 urllib3==2.3.0
 uvicorn==0.34.0
-qdrant-client==1.8.1
+qdrant-client>=1.8.2
 python-dotenv==1.0.1
 sentence-transformers==2.6.1
 pytest==8.2.1
+pytest-asyncio==0.21.0
