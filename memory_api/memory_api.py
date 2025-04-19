@@ -413,6 +413,10 @@ async def sync_with_peer(req: SyncRequest):
             "tags": point.payload.get("tags", [])
         })
 
+    print(f"[DEBUG] Prepared for sync ({len(matching)} items):")
+    for m in matching:
+        print(f" - {m['session_id']} | {m['text'][:40]}...")
+
     successes = 0
     async with httpx.AsyncClient(timeout=10.0) as client_async:
         for entry in matching:
