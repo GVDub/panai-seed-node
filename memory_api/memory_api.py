@@ -390,16 +390,15 @@ async def sync_with_peer(req: SyncRequest):
     matching = []
     scroll_filter = {}
     must_conditions = []
-    
     if req.session_id:
         must_conditions.append({"key": "session_id", "match": {"value": req.session_id}})
-    
     if req.tags:
         must_conditions.extend([{"key": "tags", "match": {"value": tag.lower()}} for tag in req.tags])
-    
     if must_conditions:
         scroll_filter["must"] = must_conditions
-    
+
+    print(f"[DEBUG] Sync scroll filter: {scroll_filter}")
+
     for point in client.scroll(
         collection_name="panai_memory",
         scroll_filter=scroll_filter,
