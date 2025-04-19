@@ -400,11 +400,13 @@ async def sync_with_peer(req: SyncRequest):
     print(f"[DEBUG] Sync scroll filter: {scroll_filter}")
     print(f"[DEBUG] Using Qdrant client: {client}")
 
-    for point in client.scroll(
+    results = client.scroll(
         collection_name="panai_memory",
         scroll_filter=scroll_filter,
         limit=req.limit
-    )[0]:
+    )
+    print(f"[DEBUG] Scroll returned {len(results[0])} items")
+    for point in results[0]:
         matching.append({
             "text": point.payload["text"],
             "session_id": point.payload["session_id"],
