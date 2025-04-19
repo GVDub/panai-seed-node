@@ -56,16 +56,17 @@ async def log_chat(chat_data: dict):
     import httpx
     print(f"[DEBUG] Logging chat to memory via internal POST: {json.dumps(chat_data, indent=2)}")
     try:
-        response = httpx.post(
-            "http://localhost:8000/memory/log_memory",
-            json={
-                "text": chat_data.get("text"),
-                "session_id": chat_data.get("session_id"),
-                "tags": chat_data.get("tags", [])
-            },
-            timeout=5.0
-        )
-        response.raise_for_status()
+        async with httpx.AsyncClient() as client:
+            response = await client.post(
+                "http://localhost:8000/memory/log_memory",
+                json={
+                    "text": chat_data.get("text"),
+                    "session_id": chat_data.get("session_id"),
+                    "tags": chat_data.get("tags", [])
+                },
+                timeout=5.0
+            )
+            response.raise_for_status()
         print("[DEBUG] Chat successfully logged to memory.")
     except Exception as e:
         print(f"[WARN] Could not log chat to memory: {e}")
