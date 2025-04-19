@@ -205,6 +205,15 @@ async def chat(req: ChatRequest):
 # --- Node Health Check ---
 @app.get("/health")
 async def health_check():
+    try:
+        from qdrant_client import QdrantClient
+        client = QdrantClient("localhost", port=6333)
+        collections = client.get_collections().collections
+        memory_ok = any(c.name == "panai_memory" for c in collections)
+    except Exception as e:
+        memory_ok = False
+        logger.error(f"[Health Check] Qdrant memory check failed: {e}")
+
     return {
         "status": "ok",
         "node": resolve_node_name(identity),
@@ -217,7 +226,8 @@ async def health_check():
         "capabilities": identity.get("capabilities", []),
         "values": identity.get("values", []),
         "uptime_seconds": int(time.time() - start_time),
-        "started_at": datetime.fromtimestamp(start_time).isoformat()
+        "started_at": datetime.fromtimestamp(start_time).isoformat(),
+        "memory_status": "ok" if memory_ok else "missing"
     }
 
 # --- Node Connection Test ---
@@ -267,7 +277,7 @@ async def about():
         "model_name": model_name
     }
 
-@app.post("/store")
+@app.post("/store", operation_id="store_memory_entry")
 async def store_alias(req: MemoryEntry):
     return await log_memory(req)
 
