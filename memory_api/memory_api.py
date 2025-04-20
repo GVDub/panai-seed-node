@@ -6,7 +6,7 @@ import httpx
 import asyncio
 
 #third-party imports
-from fastapi import APIRouter
+from fastapi import FastAPI, APIRouter
 from pydantic import BaseModel
 from qdrant_client import QdrantClient
 from sentence_transformers import SentenceTransformer
@@ -550,6 +550,10 @@ async def memory_sync_loop():
         await asyncio.sleep(300)  # Wait 5 minutes before next sync
         print("[Memory Sync Loop] Running periodic sync...")
         await sync_all_peers()
+
+@router.on_event("startup")
+async def start_background_tasks():
+    asyncio.create_task(memory_sync_loop())
 
 stats_router = router
 
