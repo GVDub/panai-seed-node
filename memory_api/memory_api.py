@@ -511,13 +511,21 @@ def log_chat_to_mesh(entry: MemoryEntry):
 # Background memory sync loop
 import asyncio
 
+async def sync_all_peers():
+    """Placeholder: Perform memory sync with all known peers."""
+    print("[Memory Sync Loop] Syncing with all peers... (placeholder)")
+    # TODO: Load peer list and perform actual sync
+
 async def memory_sync_loop():
     """Periodically sync memory entries with known peers."""
+    print("[Memory Sync Loop] Performing initial sync...")
+    await sync_all_peers()  # <-- run initial sync at startup
+
     while True:
-        print("[Memory Sync Loop] Running periodic sync...")
-        # Placeholder logic — actual sync function will be added later
         await asyncio.sleep(300)  # Wait 5 minutes before next sync
+        print("[Memory Sync Loop] Running periodic sync...")
+        await sync_all_peers()
 
 stats_router = router
 
-__all__ = ["router", "log_memory", "store_synced_memory", "MemoryEntry", "stats_router", "log_chat_to_mesh", "memory_sync_loop"]
+__all__ = ["router", "log_memory", "store_synced_memory", "MemoryEntry", "stats_router", "log_chat_to_mesh", "memory_sync_loop", "sync_all_peers"]
