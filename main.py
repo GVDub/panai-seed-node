@@ -15,7 +15,7 @@ from memory_api.memory_api import log_memory
 from memory_api.memory_api import MemoryEntry
 from memory_api.memory_api import router as memory_router
 from memory_api.memory_api import stats_router as memory_stats_router
-from memory_api.memory_api import save_peer
+from mesh_api.mesh_api import save_peer
 ## from memory_api.memory_api import memory_sync_loop
 from mesh_api.mesh_api import mesh_router
 
