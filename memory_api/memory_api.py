@@ -526,7 +526,7 @@ async def sync_all_peers():
 
     peer_urls = [node.get("hostname") for name, node in nodes.items() if node.get("status") == "active"]
 
-    for peer in peer_urls:
+    async def sync_peer(peer):
         if peer:
             print(f"[Memory Sync] Attempting sync with {peer}...")
             try:
@@ -539,6 +539,8 @@ async def sync_all_peers():
                     print(f"[Memory Sync] Synced with {peer}: {res.json()}")
             except Exception as e:
                 print(f"[Memory Sync] Failed to sync with {peer}: {e}")
+
+    await asyncio.gather(*(sync_peer(peer) for peer in peer_urls))
 
 async def memory_sync_loop():
     """Periodically sync memory entries with known peers."""
