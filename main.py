@@ -16,7 +16,7 @@ from memory_api.memory_api import MemoryEntry
 from memory_api.memory_api import memory_stats
 from memory_api.memory_api import router as memory_router
 from memory_api.memory_api import stats_router as memory_stats_router
-from memory_api.memory_api import memory_sync_loop
+## from memory_api.memory_api import memory_sync_loop
 from mesh_api.mesh_api import mesh_router
 
 logging.basicConfig(
@@ -109,42 +109,11 @@ async def periodic_health_check():
         logger.info("[Health Check] Completed round of peer health checks.")
         await asyncio.sleep(900)  # 15 minutes
 
-async def periodic_memory_sync():
-    await asyncio.sleep(30)  # Let health checks stabilize
-    while True:
-        peers = load_known_peers()
-        for peer in peers.get("nodes", []):
-            hostname = peer.get("hostname")
-            if not hostname:
-                logger.warning(f"[Memory Sync] Skipping peer (no hostname): {peer}")
-                continue
-            url = peer.get("url") or f"http://{hostname}:8000"
-            logger.debug(f"[Memory Sync] Using URL: {url} for peer: {hostname}")
-            try:
-                async with httpx.AsyncClient(timeout=10.0) as client:
-                    r = await client.post(f"{url}/memory/search_by_tag", json={"tags": ["shared", "federated"]})
-                    r.raise_for_status()
-                    remote_entries = r.json().get("results", [])
-                    logger.info(f"[Memory Sync] Retrieved {len(remote_entries)} entries from {hostname}")
-                    if len(remote_entries) == 0:
-                        logger.warning(f"[Memory Sync] No entries retrieved from {hostname}.")
-
-                    for entry in remote_entries:
-                        # Will call into memory_api later for deduplication and storage
-                        from memory_api.memory_api import store_synced_memory
-                        store_synced_memory(entry)
-            except Exception as e:
-                logger.error(f"[Memory Sync] Failed to sync with {hostname}: {e}")
-        logger.info(f"[Memory Sync] Completed sync cycle with {len(peers.get('nodes', []))} peers.")
-        logger.info(f"[Memory Sync] Memory sync stats: " + ", ".join(f"{p.get('hostname', 'unknown')}: {p.get('status', 'unknown')}" for p in peers.get("nodes", [])))
-        logger.info("[Memory Sync] Sleeping for 5 minutes before next sync cycle.")
-        await asyncio.sleep(300)  # Sync every 5 minutes
 
 @app.on_event("startup")
 async def startup_tasks():
     asyncio.create_task(preload_models())
     asyncio.create_task(periodic_health_check())
-    asyncio.create_task(periodic_memory_sync())
     asyncio.create_task(memory_sync_loop())
     logger.info("[Startup] All background tasks launched. Monitoring peers and memory sync.")
 
@@ -298,3 +267,33 @@ async def store_alias(req: MemoryEntry):
     return await log_memory(req)
 
 logger.info(f"[Startup] {resolve_node_name(identity)} is now live and ready.")
+async def memory_sync_loop():
+    await asyncio.sleep(20)  # Let other services stabilize
+    while True:
+        try:
+            with open("nodes.json", "r") as f:
+                peer_config = json.load(f)
+                peers = peer_config.get("nodes", [])
+        except Exception as e:
+            logger.error(f"[Memory Sync Loop] Failed to load peer config: {e}")
+            peers = []
+
+        for peer in peers:
+            hostname = peer.get("hostname")
+            if not hostname:
+                continue
+            url = peer.get("url") or f"http://{hostname}:8000"
+            try:
+                async with httpx.AsyncClient(timeout=10.0) as client:
+                    r = await client.post(f"{url}/memory/search_by_tag", json={"tags": ["shared", "federated"]})
+                    r.raise_for_status()
+                    remote_entries = r.json().get("results", [])
+                    logger.info(f"[Memory Sync Loop] Fetched {len(remote_entries)} entries from {hostname}")
+                    for entry in remote_entries:
+                        from memory_api.memory_api import store_synced_memory
+                        store_synced_memory(entry)
+            except Exception as e:
+                logger.error(f"[Memory Sync Loop] Error syncing with {hostname}: {e}")
+
+        logger.info("[Memory Sync Loop] Sleeping for 5 minutes before next sync...")
+        await asyncio.sleep(300)
