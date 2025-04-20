@@ -29,7 +29,7 @@
     },
     {
       "name": "GVDubAI",
-      "ip": "10.67.1.140",
+      "ip": "10.67.1.250",
       "hostname": "gvdubai.local",
       "services": ["chat"],
       "status": "active",
