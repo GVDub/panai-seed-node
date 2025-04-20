@@ -13,9 +13,9 @@ import time
 
 from memory_api.memory_api import log_memory
 from memory_api.memory_api import MemoryEntry
-from memory_api.memory_api import memory_stats
 from memory_api.memory_api import router as memory_router
 from memory_api.memory_api import stats_router as memory_stats_router
+from memory_api.memory_api import save_peer
 ## from memory_api.memory_api import memory_sync_loop
 from mesh_api.mesh_api import mesh_router
 
@@ -265,6 +265,11 @@ async def about():
 @app.post("/store", operation_id="store_memory_entry")
 async def store_alias(req: MemoryEntry):
     return await log_memory(req)
+
+@app.post("/trigger_manual_memory_sync")
+async def trigger_manual_memory_sync():
+    await memory_sync_loop()
+    return {"status": "Manual memory sync triggered"}
 
 logger.info(f"[Startup] {resolve_node_name(identity)} is now live and ready.")
 async def memory_sync_loop():
