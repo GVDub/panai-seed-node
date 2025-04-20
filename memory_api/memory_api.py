@@ -544,6 +544,7 @@ async def memory_sync_loop():
     """Periodically sync memory entries with known peers."""
     print("[Memory Sync Loop] Performing initial sync...")
     await sync_all_peers()  # <-- run initial sync at startup
+    print(f"[Memory Sync Loop] {datetime.utcnow().isoformat()} - Initial sync complete.")
 
     while True:
         try:
@@ -553,6 +554,7 @@ async def memory_sync_loop():
             print(f"[Memory Sync Loop] {datetime.utcnow().isoformat()} - Running periodic sync...")
             print("[Memory Sync Loop] Running periodic sync...")
             await sync_all_peers()
+            print(f"[Memory Sync Loop] {datetime.utcnow().isoformat()} - Periodic sync complete.")
         except Exception as e:
             print(f"[Memory Sync Loop] ERROR: {e}")
 
