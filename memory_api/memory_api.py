@@ -456,9 +456,6 @@ def store_synced_memory(entry: dict):
     if not text:
         return
 
-    # Simple deduplication by content/session hash
-    content_hash = hashlib.sha256((text + session_id).encode()).hexdigest()
-
     # Check if a memory with same hash exists
     existing = client.scroll(
         collection_name="panai_memory",
@@ -549,9 +546,13 @@ async def memory_sync_loop():
     await sync_all_peers()  # <-- run initial sync at startup
 
     while True:
-        await asyncio.sleep(300)  # Wait 5 minutes before next sync
-        print("[Memory Sync Loop] Running periodic sync...")
-        await sync_all_peers()
+        try:
+            print("[Memory Sync Loop] Sleeping 5 minutes...")
+            await asyncio.sleep(300)
+            print("[Memory Sync Loop] Running periodic sync...")
+            await sync_all_peers()
+        except Exception as e:
+            print(f"[Memory Sync Loop] ERROR: {e}")
 
 stats_router = router
 
