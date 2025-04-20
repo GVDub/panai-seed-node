@@ -113,7 +113,7 @@ class SummaryRequest(BaseModel):
     session_id: str
     limit: int = 20  # number of memories to summarize    
 
-@router.post("/search", operation_id="search_memory")
+@router.post("/search")
 def search_memory(request: QueryRequest):
     results = client.search(
         collection_name="panai_memory",
@@ -122,7 +122,7 @@ def search_memory(request: QueryRequest):
     )
     return {"results": [r.payload for r in results]}
 
-@router.post("/recall", operation_id="recall_from_text")
+@router.post("/recall")
 def recall_from_text(request: TextQuery):
     embedded_vector = embed_text(request.text)
     results = client.search(
@@ -133,7 +133,7 @@ def recall_from_text(request: TextQuery):
     return {"results": [r.payload for r in results]}
 
 
-@router.post("/search_by_tag", operation_id="search_by_tag")
+@router.post("/search_by_tag")
 def search_by_tag(request: TagQuery):
     results = client.scroll(
         collection_name="panai_memory",
@@ -156,7 +156,7 @@ def log_memory(entry: MemoryLog):
     log_generic_memory(entry.text, entry.session_id, entry.tags)
     return {"status": "🧠 Memory logged.", "session_id": entry.session_id}
 
-@router.post("/store", operation_id="store_memory")
+@router.post("/store")
 def store_memory(entry: MemoryLog):
     return log_memory(entry)
 
@@ -304,7 +304,7 @@ class DreamLogRequest(BaseModel):
     session_id: str = "default"
     tags: List[str] = ["dream", "meta"]
 
-@router.post("/log_dream", operation_id="log_dream_entry")
+@router.post("/log_dream")
 def log_dream(entry: DreamLogRequest):
     log_generic_memory(entry.text, entry.session_id, entry.tags)
     return {"status": "🌙 Dream logged.", "session_id": entry.session_id}
@@ -314,7 +314,7 @@ class ReflectionLogRequest(BaseModel):
     session_id: str = "default"
     tags: List[str] = ["reflection", "meta"]
 
-@router.post("/log_reflection", operation_id="log_reflection_entry")
+@router.post("/log_reflection")
 def log_reflection(entry: ReflectionLogRequest):
     log_generic_memory(entry.text, entry.session_id, entry.tags)
     return {"status": "🔍 Reflection logged.", "session_id": entry.session_id}
@@ -324,7 +324,7 @@ class AdviceLogRequest(BaseModel):
     session_id: str = "default"
     tags: List[str] = ["advice", "meta"]
 
-@router.post("/log_advice", operation_id="log_advice_entry")
+@router.post("/log_advice")
 def log_advice(entry: AdviceLogRequest):
     log_generic_memory(entry.text, entry.session_id, entry.tags)
     return {"status": "💡 Advice logged.", "session_id": entry.session_id}
@@ -334,7 +334,7 @@ class PlanLogRequest(BaseModel):
     session_id: str = "default"
     tags: List[str] = ["plan", "meta"]
 
-@router.post("/log_plan", operation_id="log_plan_entry")
+@router.post("/log_plan")
 def log_plan(entry: PlanLogRequest):
     log_generic_memory(entry.text, entry.session_id, entry.tags)
     return {"status": "🧭 Plan logged.", "session_id": entry.session_id}
@@ -372,7 +372,7 @@ class JournalRequest(BaseModel):
     session_id: str
     entry: str
 
-@router.post("/journal", operation_id="log_journal_entry")
+@router.post("/journal")
 def log_journal_entry(request: JournalRequest):
     log_generic_memory(request.entry, request.session_id, ["journal", "meta"])
     return {
@@ -504,7 +504,7 @@ def memory_stats():
             "message": str(e)
         }
 
-@router.post("/mesh/log_chat", operation_id="log_chat_to_mesh")
+@router.post("/mesh/log_chat")
 def log_chat_to_mesh(entry: MemoryEntry):
     log_generic_memory(entry.text, entry.session_id, entry.tags)
     return {"status": "🌐 Chat memory logged to mesh.", "session_id": entry.session_id}
