@@ -554,3 +554,21 @@ async def memory_sync_loop():
 stats_router = router
 
 __all__ = ["router", "log_memory", "store_synced_memory", "MemoryEntry", "stats_router", "log_chat_to_mesh", "memory_sync_loop", "sync_all_peers"]
+
+@router.get("/admin/dump_memories")
+def dump_all_memories(limit: int = 20):
+    results = client.scroll(
+        collection_name="panai_memory",
+        scroll_filter={},  # no filter
+        limit=limit
+    )
+    return {
+        "count": len(results[0]),
+        "entries": [
+            {
+                "text": p.payload.get("text", "")[:80],
+                "session_id": p.payload.get("session_id", ""),
+                "tags": p.payload.get("tags", [])
+            } for p in results[0]
+        ]
+    }
