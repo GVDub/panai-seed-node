@@ -273,33 +273,3 @@ async def trigger_manual_memory_sync():
     return {"status": "Manual memory sync triggered"}
 
 logger.info(f"[Startup] {resolve_node_name(identity)} is now live and ready.")
-async def memory_sync_loop():
-    await asyncio.sleep(20)  # Let other services stabilize
-    while True:
-        try:
-            with open("nodes.json", "r") as f:
-                peer_config = json.load(f)
-                peers = peer_config.get("nodes", [])
-        except Exception as e:
-            logger.error(f"[Memory Sync Loop] Failed to load peer config: {e}")
-            peers = []
-
-        for peer in peers:
-            hostname = peer.get("hostname")
-            if not hostname:
-                continue
-            url = peer.get("url") or f"http://{hostname}:8000"
-            try:
-                async with httpx.AsyncClient(timeout=10.0) as client:
-                    r = await client.post(f"{url}/memory/search_by_tag", json={"tags": ["shared", "federated"]})
-                    r.raise_for_status()
-                    remote_entries = r.json().get("results", [])
-                    logger.info(f"[Memory Sync Loop] Fetched {len(remote_entries)} entries from {hostname}")
-                    for entry in remote_entries:
-                        from memory_api.memory_api import store_synced_memory
-                        store_synced_memory(entry)
-            except Exception as e:
-                logger.error(f"[Memory Sync Loop] Error syncing with {hostname}: {e}")
-
-        logger.info("[Memory Sync Loop] Sleeping for 5 minutes before next sync...")
-        await asyncio.sleep(300)
