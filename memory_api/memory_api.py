@@ -6,7 +6,7 @@ import httpx
 import asyncio
 
 #third-party imports
-from fastapi import FastAPI, APIRouter
+from fastapi import FastAPI, APIRouter, Request
 from pydantic import BaseModel
 from qdrant_client import QdrantClient
 from sentence_transformers import SentenceTransformer
@@ -134,7 +134,8 @@ def recall_from_text(request: TextQuery):
 
 
 @router.post("/search_by_tag")
-def search_by_tag(request: TagQuery):
+def search_by_tag(request: TagQuery, req: Request):
+    print(f"[TAG SEARCH] From {req.client.host}, Tags: {request.tags}")
     results = client.scroll(
         collection_name="panai_memory",
         scroll_filter={
