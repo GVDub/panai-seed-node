@@ -2,9 +2,8 @@
 from typing import List
 from datetime import datetime
 import uuid
-import httpx
 import asyncio
-
+import httpx
 #third-party imports
 from fastapi import FastAPI, APIRouter, Request
 from pydantic import BaseModel
@@ -513,7 +512,7 @@ def log_chat_to_mesh(entry: MemoryEntry):
     return {"status": "🌐 Chat memory logged to mesh.", "session_id": entry.session_id}
 
 # Background memory sync loop
-import asyncio
+ 
 
 async def sync_all_peers():
     """Perform memory sync with all known peers."""
@@ -554,11 +553,6 @@ async def memory_sync_loop():
         print("[Memory Sync Loop] Running periodic sync...")
         await sync_all_peers()
 
-@app.on_event("startup")
-async def start_background_tasks():
-    print("[Startup] Launching memory sync background task.")
-    asyncio.create_task(memory_sync_loop())
-
 stats_router = router
 
 __all__ = ["router", "log_memory", "store_synced_memory", "MemoryEntry", "stats_router", "log_chat_to_mesh", "memory_sync_loop", "sync_all_peers"]
@@ -580,3 +574,8 @@ def dump_all_memories(limit: int = 20):
             } for p in results[0]
         ]
     }
+
+@app.on_event("startup")
+async def start_background_tasks():
+    print("[Startup] Launching memory sync background task.")
+    asyncio.create_task(memory_sync_loop())
