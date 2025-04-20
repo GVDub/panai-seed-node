@@ -582,5 +582,5 @@ def dump_all_memories(limit: int = 20):
 
 @app.on_event("startup")
 async def start_background_tasks():
-    print("[Startup] Launching memory sync background task.")
+    print("[Startup] Entered start_background_tasks() and launching memory sync background task.")
     asyncio.create_task(memory_sync_loop())
