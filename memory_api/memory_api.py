@@ -157,7 +157,7 @@ def log_memory(entry: MemoryLog):
     return {"status": "🧠 Memory logged.", "session_id": entry.session_id}
 
 @router.post("/store")
-def store_memory(entry: MemoryLog):
+def store_memory_alias(entry: MemoryLog):
     return log_memory(entry)
 
 @router.post("/summarize")
