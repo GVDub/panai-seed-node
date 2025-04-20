@@ -3,6 +3,7 @@ from typing import List
 from datetime import datetime
 import uuid
 import httpx
+import asyncio
 
 #third-party imports
 from fastapi import APIRouter
@@ -512,9 +513,33 @@ def log_chat_to_mesh(entry: MemoryEntry):
 import asyncio
 
 async def sync_all_peers():
-    """Placeholder: Perform memory sync with all known peers."""
-    print("[Memory Sync Loop] Syncing with all peers... (placeholder)")
-    # TODO: Load peer list and perform actual sync
+    """Perform memory sync with all known peers."""
+    import json
+    import os
+
+    nodes_file = "nodes.json"
+    if not os.path.exists(nodes_file):
+        print("[Memory Sync] No nodes.json file found.")
+        return
+
+    with open(nodes_file, "r") as f:
+        nodes = json.load(f)
+
+    peer_urls = [node.get("hostname") for name, node in nodes.items() if node.get("status") == "active"]
+
+    for peer in peer_urls:
+        if peer:
+            print(f"[Memory Sync] Attempting sync with {peer}...")
+            try:
+                async with httpx.AsyncClient(timeout=10.0) as client_async:
+                    res = await client_async.post(
+                        f"http://{peer}/memory/sync_with_peer",
+                        json={"peer_url": "http://localhost:8000", "limit": 10}
+                    )
+                    res.raise_for_status()
+                    print(f"[Memory Sync] Synced with {peer}: {res.json()}")
+            except Exception as e:
+                print(f"[Memory Sync] Failed to sync with {peer}: {e}")
 
 async def memory_sync_loop():
     """Periodically sync memory entries with known peers."""
