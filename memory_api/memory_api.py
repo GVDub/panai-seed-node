@@ -151,7 +151,7 @@ class MemoryLog(BaseModel):
     session_id: str = "default"
     tags: List[str] = []
 
-@router.post("/log_memory", operation_id="log_memory_entry")
+@router.post("/log_memory")
 def log_memory(entry: MemoryLog):
     log_generic_memory(entry.text, entry.session_id, entry.tags)
     return {"status": "🧠 Memory logged.", "session_id": entry.session_id}
@@ -160,7 +160,7 @@ def log_memory(entry: MemoryLog):
 def store_memory(entry: MemoryLog):
     return log_memory(entry)
 
-@router.post("/summarize", operation_id="summarize_session")
+@router.post("/summarize")
 def summarize_session(request: SummaryRequest):
     # Pull matching memories
     results = client.scroll(
@@ -196,7 +196,7 @@ class ReflectRequest(BaseModel):
     session_id: str
     limit: int = 20
 
-@router.post("/reflect", operation_id="reflect_on_session")
+@router.post("/reflect")
 async def reflect_on_session(request: ReflectRequest):
     prompt_template = (
         "Here is a series of memory logs from session '{session_id}':\n\n"
@@ -221,7 +221,7 @@ class AdviceRequest(BaseModel):
     session_id: str
     limit: int = 10
 
-@router.post("/advice", operation_id="give_advice")
+@router.post("/advice")
 async def give_advice(request: AdviceRequest):
     prompt_template = (
         "Based on these reflections from session '{session_id}':\n\n"
@@ -246,7 +246,7 @@ class PlanRequest(BaseModel):
     session_id: str
     limit: int = 10
 
-@router.post("/plan", operation_id="generate_plan")
+@router.post("/plan")
 async def generate_plan(request: PlanRequest):
     prompt_template = (
         "Based on this advice history for session '{session_id}', "
@@ -270,7 +270,7 @@ class DreamRequest(BaseModel):
     session_id: str
     limit: int = 25
 
-@router.post("/dream", operation_id="dream_from_memory")
+@router.post("/dream")
 async def dream_from_memory(request: DreamRequest):
     prompt_template = (
         "Here are some memories from session '{session_id}':\n\n"
@@ -339,7 +339,7 @@ def log_plan(entry: PlanLogRequest):
     log_generic_memory(entry.text, entry.session_id, entry.tags)
     return {"status": "🧭 Plan logged.", "session_id": entry.session_id}
 
-@router.post("/next", operation_id="next_step")
+@router.post("/next")
 async def next_step(request: PlanRequest):
     prompt_template = (
         "Here’s recent advice from session '{session_id}':\n\n"
@@ -386,7 +386,7 @@ class SyncRequest(BaseModel):
     session_id: str | None = None
     limit: int = 10
 
-@router.post("/sync_with_peer", operation_id="sync_with_peer")
+@router.post("/sync_with_peer")
 async def sync_with_peer(req: SyncRequest):
     matching = []
     scroll_filter = {}
@@ -488,7 +488,7 @@ def store_synced_memory(entry: dict):
     client.upsert(collection_name="panai_memory", points=[point])
     print(f"[Memory Sync] Stored: {text[:40]}...")
 
-@router.get("/admin/memory_stats", operation_id="memory_stats")
+@router.get("/admin/memory_stats")
 def memory_stats():
     try:
         count = client.count(collection_name="panai_memory", exact=True).count
