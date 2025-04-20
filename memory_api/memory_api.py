@@ -19,7 +19,8 @@ torch.set_num_threads(14)  # Reserve 1–2 threads for system processes
 router = APIRouter()
 
 # app definition
-# app = FastAPI()
+app = FastAPI()
+app.include_router(router)
 client = QdrantClient(host="localhost", port=6333)
 
 # Load all-mpnet-base-v2 model for embedding (768-dimension)
@@ -552,7 +553,7 @@ async def memory_sync_loop():
         print("[Memory Sync Loop] Running periodic sync...")
         await sync_all_peers()
 
-@router.on_event("startup")
+@app.on_event("startup")
 async def start_background_tasks():
     asyncio.create_task(memory_sync_loop())
 
