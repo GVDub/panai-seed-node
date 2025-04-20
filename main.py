@@ -16,6 +16,7 @@ from memory_api.memory_api import MemoryEntry
 from memory_api.memory_api import memory_stats
 from memory_api.memory_api import router as memory_router
 from memory_api.memory_api import stats_router as memory_stats_router
+from memory_api.memory_api import memory_sync_loop
 from mesh_api.mesh_api import mesh_router
 
 logging.basicConfig(
@@ -136,6 +137,7 @@ async def periodic_memory_sync():
                 logger.error(f"[Memory Sync] Failed to sync with {hostname}: {e}")
         logger.info(f"[Memory Sync] Completed sync cycle with {len(peers.get('nodes', []))} peers.")
         logger.info(f"[Memory Sync] Memory sync stats: " + ", ".join(f"{p.get('hostname', 'unknown')}: {p.get('status', 'unknown')}" for p in peers.get("nodes", [])))
+        logger.info("[Memory Sync] Sleeping for 5 minutes before next sync cycle.")
         await asyncio.sleep(300)  # Sync every 5 minutes
 
 @app.on_event("startup")
@@ -143,6 +145,7 @@ async def startup_tasks():
     asyncio.create_task(preload_models())
     asyncio.create_task(periodic_health_check())
     asyncio.create_task(periodic_memory_sync())
+    asyncio.create_task(memory_sync_loop())
     logger.info("[Startup] All background tasks launched. Monitoring peers and memory sync.")
 
 # Make sure audit log folder exists
