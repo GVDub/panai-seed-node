@@ -18,9 +18,9 @@ torch.set_num_threads(14)  # Reserve 1–2 threads for system processes
 # router definition
 router = APIRouter()
 
-# app definition
-app = FastAPI()
-app.include_router(router)
+# app definition (managed in main.py)
+# app = FastAPI()
+# app.include_router(router)
 client = QdrantClient(host="localhost", port=6333)
 
 # Load all-mpnet-base-v2 model for embedding (768-dimension)
