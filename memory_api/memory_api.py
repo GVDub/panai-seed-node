@@ -555,6 +555,7 @@ async def memory_sync_loop():
 
 @app.on_event("startup")
 async def start_background_tasks():
+    print("[Startup] Launching memory sync background task.")
     asyncio.create_task(memory_sync_loop())
 
 stats_router = router
