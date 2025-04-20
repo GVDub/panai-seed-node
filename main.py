@@ -262,7 +262,7 @@ async def about():
         "model_name": model_name
     }
 
-@app.post("/store", operation_id="store_memory_entry")
+@app.post("/store")
 async def store_alias(req: MemoryEntry):
     return await log_memory(req)
 
