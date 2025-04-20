@@ -19,6 +19,7 @@ torch.set_num_threads(14)  # Reserve 1–2 threads for system processes
 router = APIRouter()
 
 # app definition (managed in main.py)
+app = FastAPI()
 # app = FastAPI()
 # app.include_router(router)
 client = QdrantClient(host="localhost", port=6333)
