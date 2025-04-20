@@ -550,7 +550,7 @@ async def memory_sync_loop():
 
     while True:
         try:
-    print(f"[Memory Sync Loop] {datetime.utcnow().isoformat()} - Sleeping 5 minutes...")
+            print(f"[Memory Sync Loop] {datetime.utcnow().isoformat()} - Sleeping 5 minutes...")
             await asyncio.sleep(300)
             print(f"[Memory Sync Loop] {datetime.utcnow().isoformat()} - Running periodic sync...")
             await sync_all_peers()
