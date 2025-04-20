@@ -502,11 +502,22 @@ def memory_stats():
             "status": "error",
             "message": str(e)
         }
+
 @router.post("/mesh/log_chat")
 def log_chat_to_mesh(entry: MemoryEntry):
     log_generic_memory(entry.text, entry.session_id, entry.tags)
     return {"status": "🌐 Chat memory logged to mesh.", "session_id": entry.session_id}
 
+# Background memory sync loop
+import asyncio
+
+async def memory_sync_loop():
+    """Periodically sync memory entries with known peers."""
+    while True:
+        print("[Memory Sync Loop] Running periodic sync...")
+        # Placeholder logic — actual sync function will be added later
+        await asyncio.sleep(300)  # Wait 5 minutes before next sync
+
 stats_router = router
 
-__all__ = ["router", "log_memory", "store_synced_memory", "MemoryEntry", "stats_router", "log_chat_to_mesh"]
+__all__ = ["router", "log_memory", "store_synced_memory", "MemoryEntry", "stats_router", "log_chat_to_mesh", "memory_sync_loop"]
