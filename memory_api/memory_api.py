@@ -449,6 +449,11 @@ async def sync_with_peer(req: SyncRequest):
                 print(f"[DEBUG] Entry already synced to {req.peer_url}, skipping.")
                 continue
 
+            # Skip if vector is missing
+            if entry.get("vector") is None:
+                print(f"[DEBUG] Skipping memory without vector: {entry['text'][:50]}")
+                continue
+
             print(f"[DEBUG] Syncing memory to {req.peer_url} - session: {entry['session_id']}, text: {entry['text'][:50]}")
             print(f"[DEBUG] Payload: {entry}")
             try:
