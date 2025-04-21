@@ -539,17 +539,22 @@ async def sync_all_peers():
 
     async def sync_peer(peer):
         if peer:
-            print(f"[Memory Sync] Attempting sync with {peer}...")
+            # Ensure default port 8000 for peer sync endpoint
+            host = peer
+            if ":" not in peer:
+                host = f"{peer}:8000"
+            url = f"http://{host}/memory/sync_with_peer"
+            print(f"[Memory Sync] Attempting sync with {url}...")
             try:
                 async with httpx.AsyncClient(timeout=10.0) as client_async:
                     res = await client_async.post(
-                        f"http://{peer}/memory/sync_with_peer",
+                        url,
                         json={"peer_url": "http://localhost:8000", "limit": 10}
                     )
                     res.raise_for_status()
-                    print(f"[Memory Sync] Synced with {peer}: {res.json()}")
+                    print(f"[Memory Sync] Synced with {url}: {res.json()}")
             except Exception as e:
-                print(f"[Memory Sync] Failed to sync with {peer}: {e}")
+                print(f"[Memory Sync] Failed to sync with {url}: {e}")
 
     await asyncio.gather(*(sync_peer(peer) for peer in peer_urls))
     print(f"[Memory Sync Loop] {datetime.utcnow().isoformat()} - Peer sync completed.")
