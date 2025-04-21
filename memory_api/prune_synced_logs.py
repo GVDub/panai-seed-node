@@ -31,6 +31,12 @@ def prune_old_entries(entries, days_threshold=30):
             pruned.append(entry)
     return pruned
 
+def remove_entries_without_vectors(entries):
+    filtered = [entry for entry in entries if entry.get("vector") is not None]
+    removed = len(entries) - len(filtered)
+    print(f"Removed {removed} entries without vectors.")
+    return filtered
+
 def write_cleaned_log(entries, output_path):
     with open(output_path, 'w') as f:
         for entry in entries:
@@ -53,6 +59,8 @@ def main():
     entries = prune_old_entries(entries, days_threshold=args.days)
     print(f"{len(entries)} entries after pruning old data.")
 
+    entries = remove_entries_without_vectors(entries)
+
     write_cleaned_log(entries, args.output)
     print(f"Cleaned log written to {args.output}")
 
@@ -65,6 +73,8 @@ def prune_synced_logs(input_path, output_path, days_threshold=30):
 
     entries = prune_old_entries(entries, days_threshold=days_threshold)
     print(f"{len(entries)} entries after pruning old data.")
+
+    entries = remove_entries_without_vectors(entries)
 
     write_cleaned_log(entries, output_path)
     print(f"Cleaned log written to {output_path}")
