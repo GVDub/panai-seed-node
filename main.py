@@ -42,9 +42,12 @@ access = load_config("panai.access.json")
 def load_known_peers():
     try:
         with open("nodes.json", "r") as f:
-            return json.load(f)
+            data = json.load(f)
+            if isinstance(data, list):
+                return {"nodes": data}
+            return data
     except FileNotFoundError:
-        return []
+        return {"nodes": []}
 known_peers = load_known_peers()
 
 model_name = identity.get("model", "llama3.2:latest")

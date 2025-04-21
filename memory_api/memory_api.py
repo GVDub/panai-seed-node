@@ -517,13 +517,16 @@ async def sync_all_peers():
     import json
     import os
 
-    nodes_file = "nodes.json"
+    nodes_file = os.path.join(os.path.dirname(__file__), "..", "nodes.json")
     if not os.path.exists(nodes_file):
-        print("[Memory Sync] No nodes.json file found.")
+        print(f"[Memory Sync] nodes.json not found at expected path: {nodes_file}")
         return
 
     with open(nodes_file, "r") as f:
         nodes = json.load(f)
+    if not isinstance(nodes, dict):
+        print("[Memory Sync] Malformed nodes.json: expected a dict at the top level.")
+        return
 
     peer_urls = [node.get("hostname") for name, node in nodes.items() if node.get("status") == "active"]
 
