@@ -1,6 +1,7 @@
 # Standard library imports
 from typing import List
 from datetime import datetime
+from datetime import timezone
 import uuid
 import asyncio
 import httpx
@@ -38,7 +39,7 @@ def log_generic_memory(text: str, session_id: str, tags: List[str]):
         "vector": vector,
         "payload": {
             "text": text,
-            "timestamp": datetime.utcnow().isoformat(),
+            "timestamp": datetime.now(timezone.utc).isoformat(),
             "session_id": session_id,
             "tags": list(set(tag.lower() for tag in tags + [session_id])),
         }
@@ -211,7 +212,7 @@ async def reflect_on_session(request: ReflectRequest):
         "vector": embed_text(reflection),
         "payload": {
             "text": reflection,
-            "timestamp": datetime.utcnow().isoformat(),
+            "timestamp": datetime.now(timezone.utc).isoformat(),
             "session_id": request.session_id,
             "tags": ["reflection", "meta"]
         }
@@ -236,7 +237,7 @@ async def give_advice(request: AdviceRequest):
         "vector": embed_text(advice),
         "payload": {
             "text": advice,
-            "timestamp": datetime.utcnow().isoformat(),
+            "timestamp": datetime.now(timezone.utc).isoformat(),
             "session_id": request.session_id,
             "tags": ["advice", "meta"]
         }
@@ -260,7 +261,7 @@ async def generate_plan(request: PlanRequest):
         "vector": embed_text(plan),
         "payload": {
             "text": plan,
-            "timestamp": datetime.utcnow().isoformat(),
+            "timestamp": datetime.now(timezone.utc).isoformat(),
             "session_id": request.session_id,
             "tags": ["plan", "meta"]
         }
@@ -354,7 +355,7 @@ async def next_step(request: PlanRequest):
         "vector": embed_text(next_step),
         "payload": {
             "text": next_step,
-            "timestamp": datetime.utcnow().isoformat(),
+            "timestamp": datetime.now(timezone.utc).isoformat(),
             "session_id": request.session_id,
             "tags": ["next", "meta"]
         }
@@ -479,7 +480,7 @@ def store_synced_memory(entry: dict):
         "vector": vector,
         "payload": {
             "text": text,
-            "timestamp": datetime.utcnow().isoformat(),
+            "timestamp": datetime.now(timezone.utc).isoformat(),
             "session_id": session_id,
             "tags": tags
         }
@@ -545,8 +546,11 @@ async def sync_all_peers():
 async def memory_sync_loop():
     """Periodically sync memory entries with known peers."""
     print("[Memory Sync Loop] Performing initial sync...")
-    await sync_all_peers()  # <-- run initial sync at startup
-    print(f"[Memory Sync Loop] {datetime.utcnow().isoformat()} - Initial sync complete.")
+    try:
+        await sync_all_peers()  # <-- run initial sync at startup
+        print(f"[Memory Sync Loop] {datetime.utcnow().isoformat()} - Initial sync complete.")
+    except Exception as e:
+        print(f"[Memory Sync Loop] ERROR during initial sync: {e}")
 
     while True:
         try:
