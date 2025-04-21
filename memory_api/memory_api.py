@@ -464,7 +464,6 @@ async def sync_with_peer(req: SyncRequest):
 
 def store_synced_memory(entry: dict):
     """Store a memory entry from a peer, avoiding duplicates by hash of text + session_id."""
-    import hashlib
 
     text = entry.get("text", "")
     session_id = entry.get("session_id", "default")
