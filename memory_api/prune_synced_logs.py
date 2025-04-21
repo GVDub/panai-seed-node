@@ -3,6 +3,8 @@ import os
 import argparse
 from datetime import datetime, timedelta
 
+# from your_embedding_module import embed_function
+
 def load_memory_log(file_path):
     with open(file_path, 'r') as f:
         return [json.loads(line) for line in f if line.strip()]
@@ -78,6 +80,23 @@ def prune_synced_logs(input_path, output_path, days_threshold=30):
 
     write_cleaned_log(entries, output_path)
     print(f"Cleaned log written to {output_path}")
+
+
+# Function to re-embed entries without vectors
+def reembed_non_vector_entries(entries, embed_function):
+    updated_entries = []
+    reembedded_count = 0
+    for entry in entries:
+        if entry.get("vector") is None and entry.get("text"):
+            try:
+                embedded_vector = embed_function(entry["text"])
+                entry["vector"] = embedded_vector
+                reembedded_count += 1
+            except Exception as e:
+                print(f"Failed to embed entry: {entry.get('text')[:60]}... Error: {e}")
+        updated_entries.append(entry)
+    print(f"Re-embedded {reembedded_count} entries without vectors.")
+    return updated_entries
 
 if __name__ == "__main__":
     main()
