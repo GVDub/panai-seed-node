@@ -545,6 +545,7 @@ async def sync_all_peers():
                 print(f"[Memory Sync] Failed to sync with {peer}: {e}")
 
     await asyncio.gather(*(sync_peer(peer) for peer in peer_urls))
+    print(f"[Memory Sync Loop] {datetime.utcnow().isoformat()} - Peer sync completed.")
 
 async def memory_sync_loop():
     """Periodically sync memory entries with known peers."""
