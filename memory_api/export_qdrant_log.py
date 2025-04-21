@@ -41,7 +41,7 @@ def main():
     parser.add_argument("output", help="Output file path (e.g., memory_log.json)")
     parser.add_argument("--host", default="localhost", help="Qdrant host (default: localhost)")
     parser.add_argument("--port", type=int, default=6333, help="Qdrant port (default: 6333)")
-    parser.add_argument("--collection", default="memory", help="Collection name (default: memory)")
+    parser.add_argument("--collection", default="panai_memory", help="Collection name (default: panai_memory)")
     args = parser.parse_args()
 
     export_memories(args.output, args.host, args.port, args.collection)
