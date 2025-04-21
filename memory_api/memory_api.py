@@ -417,6 +417,11 @@ async def sync_with_peer(req: SyncRequest):
     if req.tags:
         scroll_filter["should"] = [{"key": "tags", "match": {"value": tag.lower()}} for tag in req.tags]
 
+    # Exclude memories that already have the tag synced:{peer_url}
+    if req.peer_url:
+        exclude_tag = f"synced:{req.peer_url}"
+        scroll_filter["must_not"] = [{"key": "tags", "match": {"value": exclude_tag}}]
+
     print(f"[DEBUG] Sync scroll filter: {scroll_filter}")
     print(f"[DEBUG] Using Qdrant client: {client}")
     print(f"[DEBUG] Scroll filter being sent to Qdrant: {scroll_filter}")
