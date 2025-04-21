@@ -33,6 +33,22 @@ def embed_text(text: str) -> list:
     return embed_model.encode(text, normalize_embeddings=True).tolist()
 
 def log_generic_memory(text: str, session_id: str, tags: List[str]):
+    # Deduplication check before embedding
+    existing = client.scroll(
+        collection_name="panai_memory",
+        scroll_filter={
+            "must": [
+                {"key": "session_id", "match": {"value": session_id}},
+                {"key": "text", "match": {"value": text}}
+            ]
+        },
+        limit=1
+    )
+
+    if existing and existing[0]:
+        print(f"[Deduplication] Skipping duplicate memory: {text[:50]}...")
+        return None
+
     vector = embed_text(text)
     point = {
         "id": str(uuid.uuid4()),
