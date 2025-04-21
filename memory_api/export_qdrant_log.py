@@ -5,21 +5,29 @@ from qdrant_client.models import PointStruct
 from datetime import datetime
 
 def export_memories(output_file, host='localhost', port=6333, collection_name='memory'):
-    client = QdrantClient(host=host, port=port)
+    client = QdrantClient(host=host, port=port, timeout=60.0)
     scroll_filter = {}
 
     total_exported = 0
     offset = None
     with open(output_file, 'w') as f:
         while True:
-            result, next_page = client.scroll(
-                collection_name=collection_name,
-                scroll_filter=scroll_filter,
-                offset=offset,
-                with_payload=True,
-                with_vectors=True,
-                limit=100
-            )
+            for attempt in range(3):
+                try:
+                    result, next_page = client.scroll(
+                        collection_name=collection_name,
+                        scroll_filter=scroll_filter,
+                        offset=offset,
+                        with_payload=True,
+                        with_vectors=True,
+                        limit=100
+                    )
+                    break
+                except Exception as e:
+                    if attempt == 2:
+                        raise
+                    print(f"[Warning] Scroll failed (attempt {attempt + 1}/3), retrying in 5s...")
+                    import time; time.sleep(5)
             if not result:
                 break
             for point in result:
