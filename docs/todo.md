@@ -2,10 +2,14 @@
 
 ## 🔥 Urgent: Memory Sync & Logging
 
-- [ ] **Prevent Re-sending Synced Memory**
+- [x] **Prevent Re-sending Synced Memory**
   - Add `synced_to` field (e.g., list of node IDs or URLs) to each memory entry
   - Skip syncing to nodes already listed
   - Append node to `synced_to` list on success
+
+- [ ] **Tag Synced Memories for Pruning**
+  - Append a `synced_to_all_peers` tag when memory has been sent to all active peers
+  - Use this tag during pruning to safely remove synced entries
 
 - [ ] **Implement Log Pruning**
   - Define a retention policy: max age, max count, or total size
@@ -36,6 +40,10 @@
   - Add `min_sync_interval` config to reduce frequency for low-traffic nodes
   - Possibly stagger sync cycles between nodes
 
+- [ ] **Batch Memory Exports to Avoid OOM**
+  - Add batch size config for memory export to JSONL
+  - Monitor RAM usage and adjust defaults for low-RAM nodes
+
 ---
 
 ## 📦 Open WebUI Integration
@@ -52,7 +60,7 @@
 
 ## 📎 Cleanup & Refactoring
 
-- [ ] **Remove unused imports (`hashlib`, etc.)**
+- [x] **Remove unused imports (`hashlib`, etc.)**
 - [ ] **Add `.env.example` with all keys**
 - [ ] **Add contributor-style doc section on how to run local multi-node mesh**
 
