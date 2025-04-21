@@ -396,8 +396,6 @@ async def sync_with_peer(req: SyncRequest):
     must_conditions = []
     if req.session_id:
         must_conditions.append({"key": "session_id", "match": {"value": req.session_id}})
-    if req.session_id:
-        must_conditions.append({"key": "session_id", "match": {"value": req.session_id}})
     if must_conditions:
         scroll_filter["must"] = must_conditions
     if req.tags:
