@@ -18,6 +18,7 @@ from memory_api.memory_api import stats_router as memory_stats_router
 from mesh_api.mesh_api import save_peer
 from memory_api.memory_api import memory_sync_loop
 from mesh_api.mesh_api import mesh_router
+from memory_api.prune_synced_logs import prune_synced_logs
 
 logging.basicConfig(
     filename="server.log",
@@ -26,6 +27,16 @@ logging.basicConfig(
 )
 
 logger = logging.getLogger(__name__)
+
+async def schedule_log_cleanup():
+    await asyncio.sleep(30)  # Wait a bit after startup
+    while True:
+        try:
+            await prune_synced_logs()
+            logger.info("[Log Cleanup] Completed scheduled memory log pruning.")
+        except Exception as e:
+            logger.error(f"[Log Cleanup] Error during log pruning: {e}")
+        await asyncio.sleep(259200)  # Every 3 days (in seconds)
 
 start_time = time.time()
 
@@ -118,6 +129,7 @@ async def startup_tasks():
     asyncio.create_task(preload_models())
     asyncio.create_task(periodic_health_check())
     asyncio.create_task(memory_sync_loop())
+    asyncio.create_task(schedule_log_cleanup())
     logger.info("[Startup] All background tasks launched. Monitoring peers and memory sync.")
 
 # Make sure audit log folder exists

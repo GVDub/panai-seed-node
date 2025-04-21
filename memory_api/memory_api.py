@@ -430,6 +430,8 @@ async def sync_with_peer(req: SyncRequest):
     print(f"[DEBUG] Scroll returned {len(results[0])} items")
     for point in results[0]:
         matching.append({
+            "id": point.id,
+            "vector": point.vector,
             "text": point.payload["text"],
             "session_id": point.payload["session_id"],
             "tags": point.payload.get("tags", [])
@@ -442,6 +444,11 @@ async def sync_with_peer(req: SyncRequest):
     successes = 0
     async with httpx.AsyncClient(timeout=10.0) as client_async:
         for entry in matching:
+            # Skip if already synced to this peer
+            if f"synced:{req.peer_url}" in entry["tags"]:
+                print(f"[DEBUG] Entry already synced to {req.peer_url}, skipping.")
+                continue
+
             print(f"[DEBUG] Syncing memory to {req.peer_url} - session: {entry['session_id']}, text: {entry['text'][:50]}")
             print(f"[DEBUG] Payload: {entry}")
             try:
@@ -452,6 +459,23 @@ async def sync_with_peer(req: SyncRequest):
                 res = await client_async.post(f"{peer_endpoint}/memory/log_memory", json=entry)
                 print(f"[DEBUG] Response status: {res.status_code}, content: {res.text}")
                 res.raise_for_status()
+                # After successful sync, update the entry's tags if not already present
+                tag = f"synced:{req.peer_url}"
+                if tag not in entry["tags"]:
+                    entry["tags"].append(tag)
+                    client.upsert(
+                        collection_name="panai_memory",
+                        points=[{
+                            "id": entry["id"],
+                            "vector": entry["vector"],
+                            "payload": {
+                                "text": entry["text"],
+                                "timestamp": datetime.now(timezone.utc).isoformat(),
+                                "session_id": entry["session_id"],
+                                "tags": entry["tags"]
+                            }
+                        }]
+                    )
                 successes += 1
             except Exception as e:
                 print(f"Failed to sync memory entry: {e}")

@@ -1,0 +1,31 @@
+
+
+{
+  "version": "2.0.0",
+  "tasks": [
+    {
+      "label": "Run Memory Sync Loop",
+      "type": "shell",
+      "command": "python services/panai-seed-node/memory_sync/sync_loop.py",
+      "group": {
+        "kind": "build",
+        "isDefault": true
+      },
+      "problemMatcher": []
+    },
+    {
+      "label": "Start API Server",
+      "type": "shell",
+      "command": "uvicorn services.panai-seed-node.memory_api.memory_api:app --reload",
+      "group": "build",
+      "problemMatcher": []
+    },
+    {
+      "label": "Prune Synced Logs",
+      "type": "shell",
+      "command": "python scripts/prune_synced_logs.py",
+      "group": "test",
+      "problemMatcher": []
+    }
+  ]
+}
