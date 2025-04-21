@@ -50,6 +50,7 @@ def main():
     parser.add_argument("input", help="Path to input memory log file")
     parser.add_argument("output", help="Path to output cleaned log file")
     parser.add_argument("--days", type=int, default=30, help="Age in days to retain entries (default: 30)")
+    parser.add_argument("--reembed", action="store_true", help="Re-embed entries without vectors")
     args = parser.parse_args()
 
     entries = load_memory_log(args.input)
@@ -60,6 +61,10 @@ def main():
 
     entries = prune_old_entries(entries, days_threshold=args.days)
     print(f"{len(entries)} entries after pruning old data.")
+
+    if args.reembed:
+        from your_embedding_module import embed_function
+        entries = reembed_non_vector_entries(entries, embed_function)
 
     entries = remove_entries_without_vectors(entries)
 
