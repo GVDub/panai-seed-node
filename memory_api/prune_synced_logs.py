@@ -56,5 +56,18 @@ def main():
     write_cleaned_log(entries, args.output)
     print(f"Cleaned log written to {args.output}")
 
+def prune_synced_logs(input_path, output_path, days_threshold=30):
+    entries = load_memory_log(input_path)
+    print(f"Loaded {len(entries)} entries.")
+
+    entries = deduplicate_entries(entries)
+    print(f"{len(entries)} entries after deduplication.")
+
+    entries = prune_old_entries(entries, days_threshold=days_threshold)
+    print(f"{len(entries)} entries after pruning old data.")
+
+    write_cleaned_log(entries, output_path)
+    print(f"Cleaned log written to {output_path}")
+
 if __name__ == "__main__":
     main()
