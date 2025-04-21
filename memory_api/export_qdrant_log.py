@@ -8,33 +8,32 @@ def export_memories(output_file, host='localhost', port=6333, collection_name='m
     client = QdrantClient(host=host, port=port)
     scroll_filter = {}
 
-    all_points = []
+    total_exported = 0
     offset = None
-    while True:
-        result, next_page = client.scroll(
-            collection_name=collection_name,
-            scroll_filter=scroll_filter,
-            offset=offset,
-            with_payload=True,
-            with_vectors=True,
-            limit=100
-        )
-        if not result:
-            break
-        all_points.extend(result)
-        offset = next_page
-
-    print(f"Exporting {len(all_points)} memory entries to {output_file}")
-
     with open(output_file, 'w') as f:
-        for point in all_points:
-            memory_entry = {
-                'id': point.id,
-                'payload': point.payload,
-                'vector': point.vector,
-            }
-            json.dump(memory_entry, f)
-            f.write('\n')
+        while True:
+            result, next_page = client.scroll(
+                collection_name=collection_name,
+                scroll_filter=scroll_filter,
+                offset=offset,
+                with_payload=True,
+                with_vectors=True,
+                limit=100
+            )
+            if not result:
+                break
+            for point in result:
+                memory_entry = {
+                    'id': point.id,
+                    'payload': point.payload,
+                    'vector': point.vector,
+                }
+                json.dump(memory_entry, f)
+                f.write('\n')
+                total_exported += 1
+            offset = next_page
+
+    print(f"Exported {total_exported} memory entries to {output_file}")
 
 def main():
     parser = argparse.ArgumentParser(description="Export memory entries from Qdrant to JSONL.")
