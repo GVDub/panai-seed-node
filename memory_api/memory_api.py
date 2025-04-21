@@ -525,12 +525,17 @@ async def sync_all_peers():
         return
 
     with open(nodes_file, "r") as f:
-        nodes = json.load(f)
-    if not isinstance(nodes, dict):
-        print("[Memory Sync] Malformed nodes.json: expected a dict at the top level.")
+        data = json.load(f)
+    nodes_dict = data.get("nodes", {})
+    if not isinstance(nodes_dict, dict):
+        print("[Memory Sync] Malformed nodes.json: expected a dict under 'nodes'.")
         return
 
-    peer_urls = [node.get("hostname") for name, node in nodes.items() if node.get("status") == "active"]
+    peer_urls = [
+        node.get("hostname")
+        for name, node in nodes_dict.items()
+        if node.get("status") == "active"
+    ]
 
     async def sync_peer(peer):
         if peer:
