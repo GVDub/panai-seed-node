@@ -131,21 +131,15 @@ For a deeper dive, see [`docs/federation.md`](docs/federation.md)
 
 ## 🧠 Memory Module (Experimental)
 
-The `memory/` directory contains an optional, self-hosted memory system built with FastAPI and [Qdrant](https://qdrant.tech/). It allows a PanAI node to:
-
-- Store and recall vector-embedded memories
-- Summarize and reflect on past sessions
-- Plan next steps and log advice
-- Dream up future narratives
-- Keep durable journals of meaningful sessions
+The `memory/` module has evolved into a robust, peer-aware subsystem enabling PanAI nodes to retain, sync, and reason over contextual memory. It integrates with [Qdrant](https://qdrant.tech/) for vector search, and supports both manual and automated memory exchange across trusted nodes on your network.
 
 **Endpoints include:**
-- `POST /log_memory` – Store a memory with vector embedding and tags
-- `POST /recall` – Retrieve relevant memories using natural language
-- `POST /summarize`, `/reflect`, `/advice`, `/dream` – Generate context-aware insights
-- `POST /journal` – Synthesize a daily summary of thought
-- `GET /memory/admin/memory_stats` – Returns a summary of current memory count and indexed tags
-
-To use it, see [`memory/README.md`](memory/README.md) for setup instructions and examples.
+- `POST /memory/log_memory` – Store a memory with vector embedding and tags
+- `POST /memory/recall` – Retrieve relevant memories using natural language
+- `POST /memory/summarize`, `/reflect`, `/advice`, `/dream` – Generate insight from memory logs
+- `POST /memory/journal` – Synthesize a journal entry from session history
+- `POST /memory/sync_with_peer` – Push selected memories to a peer
+- `POST /memory/search_by_tag` – Find memories based on tag filters
+- `GET /memory/admin/memory_stats` – Show memory totals and indexed tags
 
 > The memory system is modular and opt-in—think of it as a cortex you can bolt onto any node that wants to remember.

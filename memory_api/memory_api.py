@@ -396,10 +396,12 @@ async def sync_with_peer(req: SyncRequest):
     must_conditions = []
     if req.session_id:
         must_conditions.append({"key": "session_id", "match": {"value": req.session_id}})
-    if req.tags:
-        must_conditions.extend([{"key": "tags", "match": {"value": tag.lower()}} for tag in req.tags])
+    if req.session_id:
+        must_conditions.append({"key": "session_id", "match": {"value": req.session_id}})
     if must_conditions:
         scroll_filter["must"] = must_conditions
+    if req.tags:
+        scroll_filter["should"] = [{"key": "tags", "match": {"value": tag.lower()}} for tag in req.tags]
 
     print(f"[DEBUG] Sync scroll filter: {scroll_filter}")
     print(f"[DEBUG] Using Qdrant client: {client}")

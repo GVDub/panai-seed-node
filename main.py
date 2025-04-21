@@ -16,7 +16,6 @@ from memory_api.memory_api import MemoryEntry
 from memory_api.memory_api import router as memory_router
 from memory_api.memory_api import stats_router as memory_stats_router
 from mesh_api.mesh_api import save_peer
-## from memory_api.memory_api import memory_sync_loop
 from memory_api.memory_api import memory_sync_loop
 from mesh_api.mesh_api import mesh_router
 
@@ -53,7 +52,7 @@ known_peers = load_known_peers()
 model_name = identity.get("model", "llama3.2:latest")
 ollama_url = access.get("ollama_url", "http://localhost:11434/api/chat")
 
-## --- App Setup ---
+# --- App Setup ---
 
 def resolve_node_name(identity_json):
     configured_name = identity_json.get("node_name")
