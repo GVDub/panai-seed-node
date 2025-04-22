@@ -36,14 +36,22 @@ def prune_old_entries(entries, days_threshold=30):
 def remove_entries_without_vectors(entries):
     filtered = [entry for entry in entries if entry.get("vector") is not None]
     removed = len(entries) - len(filtered)
-    print(f"Removed {removed} entries without vectors.")
-    return filtered
+    return filtered, removed
 
-def write_cleaned_log(entries, output_path):
-    with open(output_path, 'w') as f:
-        for entry in entries:
-            json.dump(entry, f)
-            f.write('\n')
+def write_cleaned_log(entries, output_path, batch_size=1000, verbose=False):
+    mode = 'w'
+    total_written = 0
+    for i in range(0, len(entries), batch_size):
+        batch = entries[i:i+batch_size]
+        with open(output_path, mode) as f:
+            for entry in batch:
+                json.dump(entry, f)
+                f.write('\n')
+        total_written += len(batch)
+        mode = 'a'
+        if verbose:
+            print(f"Wrote batch {i//batch_size + 1} with {len(batch)} entries to {output_path}")
+    return total_written
 
 def main():
     parser = argparse.ArgumentParser(description="Prune and deduplicate memory logs.")
@@ -51,25 +59,53 @@ def main():
     parser.add_argument("output", help="Path to output cleaned log file")
     parser.add_argument("--days", type=int, default=30, help="Age in days to retain entries (default: 30)")
     parser.add_argument("--reembed", action="store_true", help="Re-embed entries without vectors")
+    parser.add_argument("--batch-size", type=int, default=1000, help="Batch size for processing entries (default: 1000)")
+    parser.add_argument("--verbose", action="store_true", help="Enable verbose output")
     args = parser.parse_args()
 
     entries = load_memory_log(args.input)
-    print(f"Loaded {len(entries)} entries.")
+    if args.verbose:
+        print(f"Loaded {len(entries)} entries.")
 
+    entries_before = len(entries)
     entries = deduplicate_entries(entries)
-    print(f"{len(entries)} entries after deduplication.")
+    if args.verbose:
+        print(f"Deduplicated entries: removed {entries_before - len(entries)} entries, {len(entries)} remain.")
 
+    entries_before = len(entries)
     entries = prune_old_entries(entries, days_threshold=args.days)
-    print(f"{len(entries)} entries after pruning old data.")
+    if args.verbose:
+        print(f"Pruned old entries: removed {entries_before - len(entries)} entries, {len(entries)} remain.")
 
     if args.reembed:
         from your_embedding_module import embed_function
-        entries = reembed_non_vector_entries(entries, embed_function)
+        entries_before = len(entries)
+        entries = reembed_non_vector_entries(entries, embed_function, verbose=args.verbose)
+        if args.verbose:
+            reembedded_count = sum(1 for e in entries if e.get("vector") is not None)
+            print(f"Re-embedded entries without vectors.")
 
-    entries = remove_entries_without_vectors(entries)
+    entries_before = len(entries)
+    entries, removed = remove_entries_without_vectors(entries)
+    if args.verbose:
+        print(f"Removed {removed} entries without vectors, {len(entries)} remain.")
 
-    write_cleaned_log(entries, args.output)
-    print(f"Cleaned log written to {args.output}")
+    total_entries = len(entries)
+    batches = (total_entries + args.batch_size - 1) // args.batch_size
+
+    for batch_idx in range(batches):
+        start = batch_idx * args.batch_size
+        end = min(start + args.batch_size, total_entries)
+        batch_entries = entries[start:end]
+        write_mode = 'w' if batch_idx == 0 else 'a'
+        with open(args.output, write_mode) as f:
+            for entry in batch_entries:
+                json.dump(entry, f)
+                f.write('\n')
+        if args.verbose:
+            print(f"Processed batch {batch_idx + 1}/{batches} with {len(batch_entries)} entries.")
+
+    print(f"Processed {batches} batches. Total entries written: {total_entries}")
 
 def prune_synced_logs(input_path, output_path, days_threshold=30):
     entries = load_memory_log(input_path)
@@ -88,7 +124,7 @@ def prune_synced_logs(input_path, output_path, days_threshold=30):
 
 
 # Function to re-embed entries without vectors
-def reembed_non_vector_entries(entries, embed_function):
+def reembed_non_vector_entries(entries, embed_function, verbose=False):
     updated_entries = []
     reembedded_count = 0
     for entry in entries:
@@ -97,10 +133,14 @@ def reembed_non_vector_entries(entries, embed_function):
                 embedded_vector = embed_function(entry["text"])
                 entry["vector"] = embedded_vector
                 reembedded_count += 1
+                if verbose:
+                    print(f"Re-embedded entry: {entry.get('text')[:60]}...")
             except Exception as e:
-                print(f"Failed to embed entry: {entry.get('text')[:60]}... Error: {e}")
+                if verbose:
+                    print(f"Failed to embed entry: {entry.get('text')[:60]}... Error: {e}")
         updated_entries.append(entry)
-    print(f"Re-embedded {reembedded_count} entries without vectors.")
+    if verbose:
+        print(f"Re-embedded {reembedded_count} entries without vectors.")
     return updated_entries
 
 if __name__ == "__main__":
