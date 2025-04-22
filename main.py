@@ -54,8 +54,11 @@ def load_known_peers():
         with open("nodes.json", "r") as f:
             data = json.load(f)
             if isinstance(data, dict) and "nodes" in data:
+                # If "nodes" is a dict, return its values as a list
+                if isinstance(data["nodes"], dict):
+                    return list(data["nodes"].values())
                 return data["nodes"]
-            return data  # Assume it's already a list
+            return data  # Fall back if format is already a list
     except FileNotFoundError:
         return []
 known_peers = load_known_peers()
@@ -195,7 +198,7 @@ async def chat(req: ChatRequest):
         "stream": False  # optional, disables token streaming
     }
     try:
-        r = requests.post("http://localhost:11434/api/generate", json=payload)
+        r = requests.post("http://localhost:11434/api/generate", json=payload, timeout=10)
         r.raise_for_status()
         content = r.json()["response"]
     except Exception as e:
