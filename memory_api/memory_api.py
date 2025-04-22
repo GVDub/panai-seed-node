@@ -582,6 +582,7 @@ async def sync_all_peers():
         data = json.load(f)
     print("[DEBUG] Raw nodes.json contents:")
     print(json.dumps(data, indent=2))
+    print(f"[DEBUG] Type of nodes field: {type(data.get('nodes'))}")
     if "nodes" not in data or not isinstance(data["nodes"], dict):
         print("[Memory Sync] Malformed nodes.json: expected a dict under 'nodes'.")
         return
