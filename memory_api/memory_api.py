@@ -658,18 +658,22 @@ def dump_all_memories(limit: int = 20):
     }
 
 # ADMIN: Re-embed missing vectors
+# Qdrant does not support filtering on null/missing vectors directly.
+# As a workaround, this endpoint will fetch the first `limit` entries (with no filter)
+# and attempt to re-embed those whose vector is missing or None.
 @router.post("/admin/reembed_missing")
 def reembed_missing(limit: int = 100):
     results = client.scroll(
         collection_name="panai_memory",
-        scroll_filter={
-            "must": [{"key": "vector", "match": {"value": None}}]
-        },
+        scroll_filter={},  # Qdrant does not support 'vector is None' filter directly
         limit=limit
     )
     reembedded = 0
     skipped = 0
     for point in results[0]:
+        # Only re-embed if vector is missing or None
+        if getattr(point, "vector", None) is not None:
+            continue
         text = point.payload.get("text", "")
         session_id = point.payload.get("session_id", "default")
         tags = point.payload.get("tags", [])
