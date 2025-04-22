@@ -25,7 +25,7 @@ def prune_old_entries(entries, days_threshold=30):
     cutoff = datetime.utcnow() - timedelta(days=days_threshold)
     pruned = []
     for entry in entries:
-        ts_str = entry.get("timestamp")
+        ts_str = entry.get("timestamp") if isinstance(entry, dict) else None
         try:
             ts = datetime.fromisoformat(ts_str.rstrip('Z'))
             if ts > cutoff:
@@ -117,6 +117,7 @@ def prune_synced_logs(input_path, output_path, days_threshold=30):
         return
 
     try:
+        entries = [e for e in entries if isinstance(e, dict)]
         entries = deduplicate_entries(entries)
         print(f"{len(entries)} entries after deduplication.")
 
