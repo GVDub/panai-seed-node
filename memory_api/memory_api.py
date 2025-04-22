@@ -580,10 +580,12 @@ async def sync_all_peers():
 
     with open(nodes_file, "r") as f:
         data = json.load(f)
-    nodes_dict = data.get("nodes", {})
-    if not isinstance(nodes_dict, dict):
+    print("[DEBUG] Raw nodes.json contents:")
+    print(json.dumps(data, indent=2))
+    if "nodes" not in data or not isinstance(data["nodes"], dict):
         print("[Memory Sync] Malformed nodes.json: expected a dict under 'nodes'.")
         return
+    nodes_dict = data["nodes"]
 
     peer_urls = [
         node.get("hostname")
