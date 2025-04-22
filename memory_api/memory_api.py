@@ -671,8 +671,9 @@ def reembed_missing(limit: int = 100):
     reembedded = 0
     skipped = 0
     for point in results[0]:
-        # Only re-embed if vector is missing or None
-        if getattr(point, "vector", None) is not None:
+        # Only re-embed if vector is missing or None or empty
+        vector = getattr(point, "vector", None)
+        if vector is not None and isinstance(vector, list) and len(vector) > 0:
             continue
         text = point.payload.get("text", "")
         session_id = point.payload.get("session_id", "default")
@@ -700,8 +701,9 @@ def reembed_missing(limit: int = 100):
             print(f"[ERROR] Failed to re-embed: {text[:40]}... | {e}")
             skipped += 1
 
+    message = "No missing vectors found." if reembedded == 0 else "Re-embedding complete."
     return {
-        "status": "✅ Re-embedding complete",
+        "status": f"✅ {message}",
         "reembedded": reembedded,
         "skipped": skipped
     }
