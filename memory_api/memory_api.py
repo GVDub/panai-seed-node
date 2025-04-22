@@ -582,11 +582,17 @@ async def sync_all_peers():
         data = json.load(f)
     print("[DEBUG] Raw nodes.json contents:")
     print(json.dumps(data, indent=2))
-    print(f"[DEBUG] Type of nodes field: {type(data.get('nodes'))}")
-    if "nodes" not in data or not isinstance(data["nodes"], dict):
-        print("[Memory Sync] Malformed nodes.json: expected a dict under 'nodes'.")
+    nodes_field = data.get("nodes")
+    print(f"[DEBUG] Type of nodes field: {type(nodes_field)}")
+
+    if isinstance(nodes_field, dict):
+        nodes_dict = nodes_field
+    elif isinstance(nodes_field, list):
+        print("[WARNING] Legacy format detected: converting list to dict using hostnames.")
+        nodes_dict = {node["hostname"]: node for node in nodes_field if "hostname" in node}
+    else:
+        print("[Memory Sync] Malformed nodes.json: expected a dict or list under 'nodes'.")
         return
-    nodes_dict = data["nodes"]
 
     peer_urls = [
         node.get("hostname")
