@@ -430,16 +430,16 @@ async def sync_with_peer(req: SyncRequest):
         exclude_tag = f"synced:{req.peer_url}"
         scroll_filter["must_not"] = [{"key": "tags", "match": {"value": exclude_tag}}]
 
-    print(f"[DEBUG] Sync scroll filter: {scroll_filter}")
-    print(f"[DEBUG] Using Qdrant client: {client}")
-    print(f"[DEBUG] Scroll filter being sent to Qdrant: {scroll_filter}")
+    # print(f"[DEBUG] Sync scroll filter: {scroll_filter}")
+    # print(f"[DEBUG] Using Qdrant client: {client}")
+    # print(f"[DEBUG] Scroll filter being sent to Qdrant: {scroll_filter}")
 
     results = client.scroll(
         collection_name="panai_memory",
         scroll_filter=scroll_filter,
         limit=req.limit
     )
-    print(f"[DEBUG] Scroll returned {len(results[0])} items")
+    # print(f"[DEBUG] Scroll returned {len(results[0])} items")
     for point in results[0]:
         matching.append({
             "id": point.id,
@@ -449,9 +449,10 @@ async def sync_with_peer(req: SyncRequest):
             "tags": point.payload.get("tags", [])
         })
 
-    print(f"[DEBUG] Prepared for sync ({len(matching)} items):")
+    # print(f"[DEBUG] Prepared for sync ({len(matching)} items):")
     for m in matching:
-        print(f" - {m['session_id']} | {m['text'][:40]}...")
+        # print(f" - {m['session_id']} | {m['text'][:40]}...")
+        pass
 
     successes = 0
     async with httpx.AsyncClient(timeout=10.0) as client_async:
@@ -466,15 +467,15 @@ async def sync_with_peer(req: SyncRequest):
                 print(f"[DEBUG] Skipping memory without vector: {entry['text'][:50]}")
                 continue
 
-            print(f"[DEBUG] Syncing memory to {req.peer_url} - session: {entry['session_id']}, text: {entry['text'][:50]}")
-            print(f"[DEBUG] Payload: {entry}")
+            # print(f"[DEBUG] Syncing memory to {req.peer_url} - session: {entry['session_id']}, text: {entry['text'][:50]}")
+            # print(f"[DEBUG] Payload: {entry}")
             try:
                 # Begin constructing peer endpoint
                 peer_endpoint = req.peer_url
                 if not peer_endpoint.startswith("http://") and not peer_endpoint.startswith("https://"):
                     peer_endpoint = f"http://{peer_endpoint}"
                 res = await client_async.post(f"{peer_endpoint}/memory/log_memory", json=entry)
-                print(f"[DEBUG] Response status: {res.status_code}, content: {res.text}")
+                # print(f"[DEBUG] Response status: {res.status_code}, content: {res.text}")
                 res.raise_for_status()
                 # After successful sync, update the entry's tags if not already present
                 tag = f"synced:{req.peer_url}"
@@ -542,7 +543,7 @@ def store_synced_memory(entry: dict):
         }
     }
     client.upsert(collection_name="panai_memory", points=[point])
-    print(f"[Memory Sync] Stored: {text[:40]}...")
+    # print(f"[Memory Sync] Stored: {text[:40]}...")
 
 @router.get("/admin/memory_stats")
 def memory_stats():
@@ -580,15 +581,12 @@ async def sync_all_peers():
 
     with open(nodes_file, "r") as f:
         data = json.load(f)
-    print("[DEBUG] Raw nodes.json contents:")
-    print(json.dumps(data, indent=2))
     nodes_field = data.get("nodes")
-    print(f"[DEBUG] Type of nodes field: {type(nodes_field)}")
 
     if isinstance(nodes_field, dict):
         nodes_dict = nodes_field
     elif isinstance(nodes_field, list):
-        print("[WARNING] Legacy format detected: converting list to dict using hostnames.")
+        print("[Memory Sync] Legacy nodes.json format detected. Converted list to dict using hostnames.")
         nodes_dict = {node["hostname"]: node for node in nodes_field if "hostname" in node}
     else:
         print("[Memory Sync] Malformed nodes.json: expected a dict or list under 'nodes'.")
@@ -607,7 +605,7 @@ async def sync_all_peers():
             if ":" not in peer:
                 host = f"{peer}:8000"
             url = f"http://{host}/memory/sync_with_peer"
-            print(f"[Memory Sync] Attempting sync with {url}...")
+            # print(f"[Memory Sync] Attempting sync with {url}...")
             try:
                 async with httpx.AsyncClient(timeout=10.0) as client_async:
                     res = await client_async.post(
@@ -615,12 +613,12 @@ async def sync_all_peers():
                         json={"peer_url": "http://localhost:8000", "limit": 10}
                     )
                     res.raise_for_status()
-                    print(f"[Memory Sync] Synced with {url}: {res.json()}")
+                    # print(f"[Memory Sync] Synced with {url}: {res.json()}")
             except Exception as e:
                 print(f"[Memory Sync] Failed to sync with {url}: {e}")
 
     await asyncio.gather(*(sync_peer(peer) for peer in peer_urls))
-    print(f"[Memory Sync Loop] {datetime.utcnow().isoformat()} - Peer sync completed.")
+    # print(f"[Memory Sync Loop] {datetime.utcnow().isoformat()} - Peer sync completed.")
 
 async def memory_sync_loop():
     """Periodically sync memory entries with known peers."""
@@ -705,7 +703,7 @@ def reembed_missing(limit: int = 100):
             )
             reembedded += 1
         except Exception as e:
-            print(f"[ERROR] Failed to re-embed: {text[:40]}... | {e}")
+            # print(f"[ERROR] Failed to re-embed: {text[:40]}... | {e}")
             skipped += 1
 
     message = "No missing vectors found." if reembedded == 0 else "Re-embedding complete."
