@@ -5,6 +5,8 @@ from datetime import timezone
 import uuid
 import asyncio
 import httpx
+import os
+import json
 #third-party imports
 from fastapi import FastAPI, APIRouter, Request
 from pydantic import BaseModel
@@ -20,6 +22,12 @@ router = APIRouter()
 
 # app definition (managed in main.py)
 app = FastAPI()
+
+# Ensure memory_log.json exists
+if not os.path.exists("memory_log.json"):
+    with open("memory_log.json", "w") as f:
+        json.dump([], f)
+
 # app = FastAPI()
 # app.include_router(router)
 client = QdrantClient(host="localhost", port=6333)
