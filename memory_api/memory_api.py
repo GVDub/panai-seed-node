@@ -439,7 +439,6 @@ async def sync_with_peer(req: SyncRequest):
         scroll_filter=scroll_filter,
         limit=req.limit
     )
-    print(f"[DEBUG] Raw scroll response: {results}")
     print(f"[DEBUG] Scroll returned {len(results[0])} items")
     for point in results[0]:
         matching.append({
