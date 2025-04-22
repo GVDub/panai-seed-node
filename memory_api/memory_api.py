@@ -638,6 +638,7 @@ stats_router = router
 
 __all__ = ["router", "log_memory", "store_synced_memory", "MemoryEntry", "stats_router", "log_chat_to_mesh", "memory_sync_loop", "sync_all_peers"]
 
+
 @router.get("/admin/dump_memories")
 def dump_all_memories(limit: int = 20):
     results = client.scroll(
@@ -654,6 +655,51 @@ def dump_all_memories(limit: int = 20):
                 "tags": p.payload.get("tags", [])
             } for p in results[0]
         ]
+    }
+
+# ADMIN: Re-embed missing vectors
+@router.post("/admin/reembed_missing")
+def reembed_missing(limit: int = 100):
+    results = client.scroll(
+        collection_name="panai_memory",
+        scroll_filter={
+            "must": [{"key": "vector", "match": {"value": None}}]
+        },
+        limit=limit
+    )
+    reembedded = 0
+    skipped = 0
+    for point in results[0]:
+        text = point.payload.get("text", "")
+        session_id = point.payload.get("session_id", "default")
+        tags = point.payload.get("tags", [])
+        if not text:
+            skipped += 1
+            continue
+        try:
+            vector = embed_text(text)
+            client.upsert(
+                collection_name="panai_memory",
+                points=[{
+                    "id": point.id,
+                    "vector": vector,
+                    "payload": {
+                        "text": text,
+                        "timestamp": point.payload.get("timestamp"),
+                        "session_id": session_id,
+                        "tags": tags
+                    }
+                }]
+            )
+            reembedded += 1
+        except Exception as e:
+            print(f"[ERROR] Failed to re-embed: {text[:40]}... | {e}")
+            skipped += 1
+
+    return {
+        "status": "✅ Re-embedding complete",
+        "reembedded": reembedded,
+        "skipped": skipped
     }
 
 @app.on_event("startup")
