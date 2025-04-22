@@ -582,6 +582,8 @@ async def sync_all_peers():
     with open(nodes_file, "r") as f:
         data = json.load(f)
     nodes_field = data.get("nodes")
+    print(f"[DEBUG] 🧪 sync_all_peers running on {os.uname().nodename}")
+    print(f"[DEBUG] nodes field type = {type(nodes_field)}")
 
     if isinstance(nodes_field, dict):
         nodes_dict = nodes_field
