@@ -53,11 +53,11 @@ def load_known_peers():
     try:
         with open("nodes.json", "r") as f:
             data = json.load(f)
-            if isinstance(data, list):
-                return {"nodes": data}
-            return data
+            if isinstance(data, dict) and "nodes" in data:
+                return data["nodes"]
+            return data  # Assume it's already a list
     except FileNotFoundError:
-        return {"nodes": []}
+        return []
 known_peers = load_known_peers()
 
 model_name = identity.get("model", "llama3.2:latest")
@@ -96,7 +96,7 @@ async def periodic_health_check():
     while True:
         peers = load_known_peers()
         updated = False
-        for peer in peers.get("nodes", []):
+        for peer in peers:
             if not isinstance(peer, dict):
                 logger.warning(f"[Health Check] Skipping malformed peer entry: {peer}")
                 continue
@@ -120,10 +120,10 @@ async def periodic_health_check():
                 logger.info(f"[Health Check] {peer.get('hostname', 'unknown')} status: {peer['status']}")
         if updated:
             with open("nodes.json", "w") as f:
-                json.dump(peers, f, indent=2)
+                json.dump({"nodes": peers}, f, indent=2)
         peer_statuses = ", ".join(
             f"{p.get('hostname', 'unknown')}: {p.get('status', 'unknown')}"
-            for p in peers.get("nodes", [])
+            for p in peers
             if isinstance(p, dict)
         )
         logger.info(f"[Health Check] Peer statuses: {peer_statuses}")
