@@ -32,7 +32,7 @@ async def schedule_log_cleanup():
     await asyncio.sleep(30)  # Wait a bit after startup
     while True:
         try:
-            await prune_synced_logs()
+            await prune_synced_logs("memory_log.json", "cleaned_log.json", days_threshold=30)
             logger.info("[Log Cleanup] Completed scheduled memory log pruning.")
         except Exception as e:
             logger.error(f"[Log Cleanup] Error during log pruning: {e}")
@@ -97,6 +97,9 @@ async def periodic_health_check():
         peers = load_known_peers()
         updated = False
         for peer in peers.get("nodes", []):
+            if not isinstance(peer, dict):
+                logger.warning(f"[Health Check] Skipping malformed peer entry: {peer}")
+                continue
             url = peer.get("url") or f"http://{peer.get('hostname')}:8000"
             logger.debug(f"[Health Check] Using URL: {url} for peer: {peer.get('hostname')}")
             try:
@@ -118,7 +121,11 @@ async def periodic_health_check():
         if updated:
             with open("nodes.json", "w") as f:
                 json.dump(peers, f, indent=2)
-        peer_statuses = ", ".join(f"{p.get('hostname', 'unknown')}: {p.get('status', 'unknown')}" for p in peers.get("nodes", []))
+        peer_statuses = ", ".join(
+            f"{p.get('hostname', 'unknown')}: {p.get('status', 'unknown')}"
+            for p in peers.get("nodes", [])
+            if isinstance(p, dict)
+        )
         logger.info(f"[Health Check] Peer statuses: {peer_statuses}")
         logger.info("[Health Check] Completed round of peer health checks.")
         await asyncio.sleep(900)  # 15 minutes

@@ -1,8 +1,6 @@
 import argparse
 import json
 from qdrant_client import QdrantClient
-from qdrant_client.models import PointStruct
-from datetime import datetime
 
 def export_memories(output_file, host='localhost', port=6333, collection_name='memory'):
     client = QdrantClient(host=host, port=port, timeout=60.0)
@@ -23,11 +21,12 @@ def export_memories(output_file, host='localhost', port=6333, collection_name='m
                         limit=100
                     )
                     break
-                except Exception as e:
+                except Exception:
                     if attempt == 2:
                         raise
                     print(f"[Warning] Scroll failed (attempt {attempt + 1}/3), retrying in 5s...")
-                    import time; time.sleep(5)
+                    import time
+                    time.sleep(5)
             if not result:
                 break
             for point in result:

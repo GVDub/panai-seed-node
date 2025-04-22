@@ -1,9 +1,11 @@
 import json
-import os
 import argparse
 from datetime import datetime, timedelta
 
+
+# Replace with actual embedding module import
 # from your_embedding_module import embed_function
+def embed_function(text): return [0.0] * 768  # placeholder for embedding
 
 def load_memory_log(file_path):
     with open(file_path, 'r') as f:
@@ -78,12 +80,11 @@ def main():
         print(f"Pruned old entries: removed {entries_before - len(entries)} entries, {len(entries)} remain.")
 
     if args.reembed:
-        from your_embedding_module import embed_function
+        # from your_embedding_module import embed_function
         entries_before = len(entries)
         entries = reembed_non_vector_entries(entries, embed_function, verbose=args.verbose)
         if args.verbose:
-            reembedded_count = sum(1 for e in entries if e.get("vector") is not None)
-            print(f"Re-embedded entries without vectors.")
+            print("Re-embedded entries without vectors.")
 
     entries_before = len(entries)
     entries, removed = remove_entries_without_vectors(entries)
@@ -108,19 +109,27 @@ def main():
     print(f"Processed {batches} batches. Total entries written: {total_entries}")
 
 def prune_synced_logs(input_path, output_path, days_threshold=30):
-    entries = load_memory_log(input_path)
-    print(f"Loaded {len(entries)} entries.")
+    try:
+        entries = load_memory_log(input_path)
+        print(f"Loaded {len(entries)} entries.")
+    except Exception as e:
+        print(f"[ERROR] Failed to load memory log: {e}")
+        return
 
-    entries = deduplicate_entries(entries)
-    print(f"{len(entries)} entries after deduplication.")
+    try:
+        entries = deduplicate_entries(entries)
+        print(f"{len(entries)} entries after deduplication.")
 
-    entries = prune_old_entries(entries, days_threshold=days_threshold)
-    print(f"{len(entries)} entries after pruning old data.")
+        entries = prune_old_entries(entries, days_threshold=days_threshold)
+        print(f"{len(entries)} entries after pruning old data.")
 
-    entries = remove_entries_without_vectors(entries)
+        entries, removed = remove_entries_without_vectors(entries)
+        print(f"{len(entries)} entries remain after removing {removed} entries without vectors.")
 
-    write_cleaned_log(entries, output_path)
-    print(f"Cleaned log written to {output_path}")
+        total_written = write_cleaned_log(entries, output_path)
+        print(f"Cleaned log written to {output_path} with {total_written} entries.")
+    except Exception as e:
+        print(f"[ERROR] Failed during pruning process: {e}")
 
 
 # Function to re-embed entries without vectors
