@@ -1,9 +1,12 @@
+from fastapi import FastAPI
 from fastapi import APIRouter
 from datetime import datetime
 import json
 import os
 
 mesh_router = APIRouter()
+
+app = FastAPI()
 
 NODES_FILE = "nodes.json"
 CHAT_LOG_FILE = "mesh_chat_log.jsonl"
@@ -81,3 +84,8 @@ async def log_chat(chat_data: dict):
     return {"message": "Chat entry logged to mesh"}
 
 router = mesh_router
+
+
+@app.on_event("startup")
+async def ensure_nodes_file():
+    load_known_peers()

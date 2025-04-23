@@ -11,10 +11,13 @@ import requests
 import socket
 import time
 
-from memory_api.memory_api import log_memory
-from memory_api.memory_api import MemoryEntry
-from memory_api.memory_api import router as memory_router
-from memory_api.memory_api import stats_router as memory_stats_router
+from memory_api.memory_api import (
+    app as memory_app,
+    log_memory,
+    MemoryEntry,
+    router as memory_router,
+    stats_router as memory_stats_router
+)
 from mesh_api.mesh_api import save_peer
 from memory_api.memory_api import memory_sync_loop
 from mesh_api.mesh_api import mesh_router
@@ -74,7 +77,7 @@ def resolve_node_name(identity_json):
         return f"Seed-{socket.gethostname()}.local"
     return configured_name
 
-app = FastAPI(title=resolve_node_name(identity))
+app = memory_app
 app.include_router(memory_router, prefix="/memory")
 app.include_router(memory_stats_router, prefix="/memory")
 app.include_router(mesh_router, prefix="/mesh")
