@@ -190,7 +190,7 @@ def log_interaction(prompt, response, tags):
         logger.warning(f"[Audit] Failed to log memory from chat: {e}")
 
 # --- Chat Endpoint ---
-@app.post("/chat", response_model=ChatResponse)
+@app.post("/chat", response_model=ChatResponse, operation_id="chat_with_model")
 async def chat(req: ChatRequest):
     payload = {
         "model": model_name,
@@ -213,7 +213,7 @@ async def chat(req: ChatRequest):
     )
 
 # --- Node Health Check ---
-@app.get("/health")
+@app.get("/health", operation_id="health_check_status")
 async def health_check():
     try:
         from qdrant_client import QdrantClient
@@ -244,7 +244,7 @@ async def health_check():
 class NodePingRequest(BaseModel):
     target_url: str
 
-@app.post("/ping_node")
+@app.post("/ping_node", operation_id="ping_peer_node")
 async def ping_node(req: NodePingRequest):
     try:
         r = requests.get(f"{req.target_url}/health", timeout=5)
@@ -279,7 +279,7 @@ async def ping_node(req: NodePingRequest):
         )
 
 # --- About Endpoint ---
-@app.get("/about")
+@app.get("/about", operation_id="about_node_info")
 async def about():
     return {
         "identity": identity,
@@ -287,11 +287,11 @@ async def about():
         "model_name": model_name
     }
 
-@app.post("/store")
+@app.post("/store", operation_id="store_memory_alias")
 async def store_alias(req: MemoryEntry):
     return await log_memory(req)
 
-@app.post("/trigger_manual_memory_sync")
+@app.post("/trigger_manual_memory_sync", operation_id="manual_memory_sync")
 async def trigger_manual_memory_sync():
     await memory_sync_loop()
     return {"status": "Manual memory sync triggered"}

@@ -27,7 +27,7 @@ def log_chat_to_mesh(chat_entry):
     with open(CHAT_LOG_FILE, "a") as f:
         f.write(json.dumps(chat_entry) + "\n")
 
-@mesh_router.post("/register_peer")
+@mesh_router.post("/register_peer", operation_id="register_peer_node")
 async def register_peer(peer_data: dict):
     peer_entry = {
         "url": peer_data.get("url"),
@@ -44,12 +44,12 @@ async def register_peer(peer_data: dict):
     save_peer(peer_entry)
     return {"message": f"Peer {peer_entry['name']} registered"}
 
-@mesh_router.get("/peers")
+@mesh_router.get("/peers", operation_id="list_known_peers")
 async def list_peers():
     peers = load_known_peers()
     return peers
 
-@mesh_router.post("/log_chat")
+@mesh_router.post("/log_chat", operation_id="log_chat_to_memory_mesh")
 async def log_chat(chat_data: dict):
     log_chat_to_mesh(chat_data)
     print(f"[DEBUG] Chat data received in /mesh/log_chat:\n{json.dumps(chat_data, indent=2)}")
