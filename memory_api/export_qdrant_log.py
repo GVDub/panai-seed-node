@@ -14,7 +14,7 @@ def export_memories(output_file, host='localhost', port=6333, collection_name='m
                 try:
                     result, next_page = client.scroll(
                         collection_name=collection_name,
-                        scroll_filter=scroll_filter,
+                        filter=scroll_filter,
                         offset=offset,
                         with_payload=True,
                         with_vectors=True,

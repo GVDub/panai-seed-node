@@ -8,8 +8,33 @@ from datetime import datetime, timedelta
 def embed_function(text): return [0.0] * 768  # placeholder for embedding
 
 def load_memory_log(file_path):
+    """
+    Load memory log as either a JSON list or JSONL file.
+    Returns a list of entry dicts.
+    """
     with open(file_path, 'r') as f:
-        return [json.loads(line) for line in f if line.strip()]
+        content = f.read()
+    content_stripped = content.strip()
+    # If file is a JSON list, parse it directly
+    if content_stripped.startswith('['):
+        try:
+            data = json.loads(content_stripped)
+            if isinstance(data, list):
+                return data
+        except json.JSONDecodeError:
+            # Fall back to line-by-line parsing
+            pass
+    # Fallback: parse as newline-delimited JSON
+    entries = []
+    for line in content.splitlines():
+        line = line.strip()
+        if not line:
+            continue
+        try:
+            entries.append(json.loads(line))
+        except json.JSONDecodeError as e:
+            print(f"[PruneLogs] Skipping malformed JSON line: {e}")
+    return entries
 
 def deduplicate_entries(entries):
     seen = set()

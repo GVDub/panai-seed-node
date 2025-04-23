@@ -2,6 +2,7 @@ from fastapi import APIRouter
 from datetime import datetime
 import json
 import os
+import socket
 
 mesh_router = APIRouter()
 
@@ -11,38 +12,35 @@ CHAT_LOG_FILE = "mesh_chat_log.jsonl"
 def load_known_peers():
     if not os.path.exists(NODES_FILE):
         if os.path.exists("nodes_template.json"):
-            print("[INFO] nodes.json not found; creating from nodes_template.json")
+            print("[Mesh] nodes.json not found; initializing from nodes_template.json")
             with open("nodes_template.json", "r") as template_file:
-                template_data = json.load(template_file)
+                data = json.load(template_file)
+            # Write out to nodes.json
             with open(NODES_FILE, "w") as f:
-                json.dump(template_data, f, indent=2)
-            return template_data
-        else:
-            print("[WARN] No nodes.json or nodes_template.json found.")
-            return []
+                json.dump(data, f, indent=2)
+            return data.get("nodes", [])
+        print("[Mesh] No nodes.json or nodes_template.json found.")
+        return []
     with open(NODES_FILE, "r") as f:
         data = json.load(f)
-    # Transform nodes dict into a list of peer dicts
-    peers = []
-    for name, node in data.get("nodes", {}).items():
-        node_copy = node.copy()
-        node_copy["name"] = name
-        peers.append(node_copy)
-    return peers
+    nodes = data.get("nodes", [])
+    if not isinstance(nodes, list):
+        print("[Mesh] Malformed nodes.json: expected a list under 'nodes'.")
+        return []
+    return nodes
 
 def save_peer(peer_entry):
-    data = load_known_peers()
-    if peer_entry["name"] not in [peer.get("name") for peer in data]:
-        # Load existing data from file to preserve structure
-        if os.path.exists(NODES_FILE):
-            with open(NODES_FILE, "r") as f:
-                existing_data = json.load(f)
-        else:
-            existing_data = {"nodes": {}}
-        existing_data.setdefault("nodes", {})
-        existing_data["nodes"][peer_entry["name"]] = peer_entry
-        with open(NODES_FILE, "w") as f:
-            json.dump(existing_data, f, indent=2)
+    peers = load_known_peers()
+    # Update existing or append new
+    names = [p.get("name") for p in peers]
+    if peer_entry["name"] in names:
+        peers = [peer_entry if p.get("name")==peer_entry["name"] else p for p in peers]
+    else:
+        peers.append(peer_entry)
+    # Write back full structure
+    out = {"version": "1.0", "nodes": peers}
+    with open(NODES_FILE, "w") as f:
+        json.dump(out, f, indent=2)
 
 def log_chat_to_mesh(chat_entry):
     with open(CHAT_LOG_FILE, "a") as f:

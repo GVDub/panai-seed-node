@@ -52,7 +52,7 @@ def log_generic_memory(text: str, session_id: str, tags: List[str]):
     # Deduplication check before embedding
     existing = client.scroll(
         collection_name="panai_memory",
-        scroll_filter={
+        filter={
             "must": [
                 {"key": "session_id", "match": {"value": session_id}},
                 {"key": "text", "match": {"value": text}}
@@ -98,7 +98,7 @@ def log_generic_memory(text: str, session_id: str, tags: List[str]):
 def query_and_generate(session_id: str, tags: List[str], prompt_template: str, model: str = "mistral-nemo", limit: int = 25) -> str:
     results = client.scroll(
         collection_name="panai_memory",
-        scroll_filter={
+        filter={
             "must": [
                 {"key": "session_id", "match": {"value": session_id}},
                 *([{"key": "tags", "match": {"value": tag}} for tag in tags] if tags else [])
@@ -118,7 +118,7 @@ def query_and_generate(session_id: str, tags: List[str], prompt_template: str, m
 async def query_and_generate_async(session_id: str, tags: List[str], prompt_template: str, model: str = "mistral-nemo", limit: int = 25) -> str:
     results = client.scroll(
         collection_name="panai_memory",
-        scroll_filter={
+        filter={
             "must": [
                 {"key": "session_id", "match": {"value": session_id}},
                 *([{"key": "tags", "match": {"value": tag}} for tag in tags] if tags else [])
@@ -188,7 +188,7 @@ def search_by_tag(request: TagQuery, req: Request):
     print(f"[TAG SEARCH] From {req.client.host}, Tags: {request.tags}")
     results = client.scroll(
         collection_name="panai_memory",
-        scroll_filter={
+        filter={
             "must": [
                 *([{"key": "tags", "match": {"value": tag.lower()}} for tag in request.tags] if request.tags else [])
             ]
@@ -216,7 +216,7 @@ def summarize_session(request: SummaryRequest):
     # Pull matching memories
     results = client.scroll(
         collection_name="panai_memory",
-        scroll_filter={
+        filter={
             "must": [
                 {"key": "session_id", "match": {"value": request.session_id}}
             ]
@@ -609,35 +609,30 @@ async def sync_all_peers():
 
     with open(nodes_file, "r") as f:
         data = json.load(f)
-    nodes_field = data.get("nodes")
+    nodes_list = data.get("nodes", [])
     print(f"[DEBUG] 🧪 sync_all_peers running on {os.uname().nodename}")
-    print(f"[DEBUG] nodes field type = {type(nodes_field)}")
+    print(f"[DEBUG] nodes field type = {type(nodes_list)}")
 
-    if isinstance(nodes_field, dict):
-        nodes_dict = nodes_field
-    elif isinstance(nodes_field, list):
-        print("[Memory Sync] Legacy nodes.json format detected. Converted list to dict using hostnames.")
-        nodes_dict = {node["hostname"]: node for node in nodes_field if "hostname" in node}
-    else:
-        print("[Memory Sync] Malformed nodes.json: expected a dict or list under 'nodes'.")
+    if not isinstance(nodes_list, list):
+        print("[Memory Sync] Malformed nodes.json: expected a list under 'nodes'.")
         return
 
     # Debug print: node status and services
-    for name, node in nodes_dict.items():
-        print(f"[Memory Sync] Node '{name}': status={node.get('status')}, services={node.get('services')}")
+    for node in nodes_list:
+        print(f"[Memory Sync] Node '{node.get('name')}': status={node.get('status')}, services={node.get('services')}")
 
-    # Determine local hostname to exclude self from peer list
+    # Determine local hostnames to exclude self from peer list
+    local_short = socket.gethostname()
     local_fqdn = socket.getfqdn()
-    print(f"[Memory Sync] Local node hostname: {local_fqdn}")
+    local_names = {local_short, local_fqdn, "localhost"}
+    print(f"[Memory Sync] Local host names: short={local_short}, fqdn={local_fqdn}")
 
-    # Optionally: include all nodes with the "memory" service, excluding self
+    # Include all nodes with the "memory" service, excluding self
     peer_urls = [
         node.get("hostname")
-        for name, node in nodes_dict.items()
-        if "memory" in node.get("services", [])
-           and node.get("hostname") != local_fqdn
+        for node in nodes_list
+        if "memory" in node.get("services", []) and node.get("hostname") not in local_names
     ]
-    print(f"[Memory Sync] Peer nodes loaded: {list(nodes_dict.keys())}")
     print(f"[Memory Sync] Target peer URLs for sync: {peer_urls}")
 
     async def sync_peer(peer):
@@ -698,7 +693,7 @@ __all__ = ["router", "log_memory", "store_synced_memory", "MemoryEntry", "stats_
 def dump_all_memories(limit: int = 20):
     results = client.scroll(
         collection_name="panai_memory",
-        scroll_filter={},  # no filter
+        filter={},  # no filter
         limit=limit
     )
     return {
@@ -721,7 +716,7 @@ def dump_all_memories(limit: int = 20):
 def reembed_missing(limit: int = 100):
     results = client.scroll(
         collection_name="panai_memory",
-        scroll_filter={},  # Qdrant does not support 'vector is None' filter directly
+        filter={},  # Qdrant does not support 'vector is None' filter directly
         limit=limit
     )
     reembedded = 0

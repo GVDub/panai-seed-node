@@ -56,12 +56,11 @@ def load_known_peers():
     try:
         with open("nodes.json", "r") as f:
             data = json.load(f)
-            if isinstance(data, dict) and "nodes" in data:
-                # If "nodes" is a dict, return its values as a list
-                if isinstance(data["nodes"], dict):
-                    return list(data["nodes"].values())
-                return data["nodes"]
-            return data  # Fall back if format is already a list
+        nodes_list = data.get("nodes", [])
+        if not isinstance(nodes_list, list):
+            print("[Main] Malformed nodes.json: expected a list under 'nodes'.")
+            return []
+        return nodes_list
     except FileNotFoundError:
         return []
 known_peers = load_known_peers()
@@ -126,7 +125,7 @@ async def periodic_health_check():
                 logger.info(f"[Health Check] {peer.get('hostname', 'unknown')} status: {peer['status']}")
         if updated:
             with open("nodes.json", "w") as f:
-                json.dump({"nodes": peers}, f, indent=2)
+                json.dump({"version": "1.0", "nodes": peers}, f, indent=2)
         peer_statuses = ", ".join(
             f"{p.get('hostname', 'unknown')}: {p.get('status', 'unknown')}"
             for p in peers
