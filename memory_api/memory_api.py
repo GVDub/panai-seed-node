@@ -689,7 +689,8 @@ def dump_all_memories(limit: int = 20):
             {
                 "text": p.payload.get("text", "")[:80],
                 "session_id": p.payload.get("session_id", ""),
-                "tags": p.payload.get("tags", [])
+                "tags": p.payload.get("tags", []),
+                "id": p.id
             } for p in results[0]
         ]
     }
