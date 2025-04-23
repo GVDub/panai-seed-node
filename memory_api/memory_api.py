@@ -160,7 +160,7 @@ class SummaryRequest(BaseModel):
     session_id: str
     limit: int = 20  # number of memories to summarize    
 
-@router.post("/search", operation_id="search_memory")
+@router.post("/search", operation_id="search_memory_vector")
 def search_memory(request: QueryRequest):
     results = client.search(
         collection_name="panai_memory",
@@ -169,7 +169,7 @@ def search_memory(request: QueryRequest):
     )
     return {"results": [r.payload for r in results]}
 
-@router.post("/recall", operation_id="recall_from_text")
+@router.post("/recall", operation_id="recall_memory_by_text")
 def recall_from_text(request: TextQuery):
     embedded_vector = embed_text(request.text)
     results = client.search(
@@ -180,7 +180,7 @@ def recall_from_text(request: TextQuery):
     return {"results": [r.payload for r in results]}
 
 
-@router.post("/search_by_tag", operation_id="search_by_tag")
+@router.post("/search_by_tag", operation_id="search_memory_by_tag")
 def search_by_tag(request: TagQuery, req: Request):
     print(f"[TAG SEARCH] From {req.client.host}, Tags: {request.tags}")
     results = client.scroll(
@@ -199,16 +199,16 @@ class MemoryLog(BaseModel):
     session_id: str = "default"
     tags: List[str] = []
 
-@router.post("/log_memory", operation_id="log_memory")
+@router.post("/log_memory", operation_id="log_generic_memory")
 def log_memory(entry: MemoryLog):
     log_generic_memory(entry.text, entry.session_id, entry.tags)
     return {"status": "🧠 Memory logged.", "session_id": entry.session_id}
 
-@router.post("/store", operation_id="store_memory_alias")
+@router.post("/store", operation_id="store_memory_direct")
 def store_memory_alias(entry: MemoryLog):
     return log_memory(entry)
 
-@router.post("/summarize", operation_id="summarize_session")
+@router.post("/summarize", operation_id="summarize_memory_session")
 def summarize_session(request: SummaryRequest):
     # Pull matching memories
     results = client.scroll(
@@ -244,7 +244,7 @@ class ReflectRequest(BaseModel):
     session_id: str
     limit: int = 20
 
-@router.post("/reflect", operation_id="reflect_on_session")
+@router.post("/reflect", operation_id="reflect_memory_session")
 async def reflect_on_session(request: ReflectRequest):
     prompt_template = (
         "Here is a series of memory logs from session '{session_id}':\n\n"
@@ -269,7 +269,7 @@ class AdviceRequest(BaseModel):
     session_id: str
     limit: int = 10
 
-@router.post("/advice", operation_id="give_advice")
+@router.post("/advice", operation_id="generate_advice_from_reflection")
 async def give_advice(request: AdviceRequest):
     prompt_template = (
         "Based on these reflections from session '{session_id}':\n\n"
@@ -294,7 +294,7 @@ class PlanRequest(BaseModel):
     session_id: str
     limit: int = 10
 
-@router.post("/plan", operation_id="generate_plan")
+@router.post("/plan", operation_id="generate_action_plan")
 async def generate_plan(request: PlanRequest):
     prompt_template = (
         "Based on this advice history for session '{session_id}', "
@@ -318,7 +318,7 @@ class DreamRequest(BaseModel):
     session_id: str
     limit: int = 25
 
-@router.post("/dream", operation_id="dream_from_memory")
+@router.post("/dream", operation_id="generate_dream_from_memory")
 async def dream_from_memory(request: DreamRequest):
     prompt_template = (
         "Here are some memories from session '{session_id}':\n\n"
@@ -352,7 +352,7 @@ class DreamLogRequest(BaseModel):
     session_id: str = "default"
     tags: List[str] = ["dream", "meta"]
 
-@router.post("/log_dream", operation_id="log_dream")
+@router.post("/log_dream", operation_id="log_dream_entry")
 def log_dream(entry: DreamLogRequest):
     log_generic_memory(entry.text, entry.session_id, entry.tags)
     return {"status": "🌙 Dream logged.", "session_id": entry.session_id}
@@ -362,7 +362,7 @@ class ReflectionLogRequest(BaseModel):
     session_id: str = "default"
     tags: List[str] = ["reflection", "meta"]
 
-@router.post("/log_reflection", operation_id="log_reflection")
+@router.post("/log_reflection", operation_id="log_reflection_entry")
 def log_reflection(entry: ReflectionLogRequest):
     log_generic_memory(entry.text, entry.session_id, entry.tags)
     return {"status": "🔍 Reflection logged.", "session_id": entry.session_id}
@@ -372,7 +372,7 @@ class AdviceLogRequest(BaseModel):
     session_id: str = "default"
     tags: List[str] = ["advice", "meta"]
 
-@router.post("/log_advice", operation_id="log_advice")
+@router.post("/log_advice", operation_id="log_advice_entry")
 def log_advice(entry: AdviceLogRequest):
     log_generic_memory(entry.text, entry.session_id, entry.tags)
     return {"status": "💡 Advice logged.", "session_id": entry.session_id}
@@ -382,12 +382,12 @@ class PlanLogRequest(BaseModel):
     session_id: str = "default"
     tags: List[str] = ["plan", "meta"]
 
-@router.post("/log_plan", operation_id="log_plan")
+@router.post("/log_plan", operation_id="log_plan_entry")
 def log_plan(entry: PlanLogRequest):
     log_generic_memory(entry.text, entry.session_id, entry.tags)
     return {"status": "🧭 Plan logged.", "session_id": entry.session_id}
 
-@router.post("/next", operation_id="next_step")
+@router.post("/next", operation_id="generate_next_step")
 async def next_step(request: PlanRequest):
     prompt_template = (
         "Here’s recent advice from session '{session_id}':\n\n"
@@ -420,7 +420,7 @@ class JournalRequest(BaseModel):
     session_id: str
     entry: str
 
-@router.post("/journal", operation_id="log_journal_entry")
+@router.post("/journal", operation_id="log_memory_journal_entry")
 def log_journal_entry(request: JournalRequest):
     log_generic_memory(request.entry, request.session_id, ["journal", "meta"])
     return {
@@ -434,7 +434,7 @@ class SyncRequest(BaseModel):
     session_id: str | None = None
     limit: int = 10
 
-@router.post("/sync_with_peer", operation_id="sync_with_peer")
+@router.post("/sync_with_peer", operation_id="sync_memory_with_peer")
 async def sync_with_peer(req: SyncRequest):
     matching = []
     scroll_filter = {}
@@ -567,7 +567,7 @@ def store_synced_memory(entry: dict):
     client.upsert(collection_name="panai_memory", points=[point])
     # print(f"[Memory Sync] Stored: {text[:40]}...")
 
-@router.get("/admin/memory_stats", operation_id="memory_stats")
+@router.get("/admin/memory_stats", operation_id="get_memory_stats")
 def memory_stats():
     try:
         count = client.count(collection_name="panai_memory", exact=True).count
@@ -583,7 +583,7 @@ def memory_stats():
             "message": str(e)
         }
 
-@router.post("/mesh/log_chat", operation_id="log_chat_to_mesh")
+@router.post("/mesh/log_chat", operation_id="log_chat_memory_to_mesh")
 def log_chat_to_mesh(entry: MemoryEntry):
     log_generic_memory(entry.text, entry.session_id, entry.tags)
     return {"status": "🌐 Chat memory logged to mesh.", "session_id": entry.session_id}
@@ -676,7 +676,7 @@ stats_router = router
 __all__ = ["router", "log_memory", "store_synced_memory", "MemoryEntry", "stats_router", "log_chat_to_mesh", "memory_sync_loop", "sync_all_peers"]
 
 
-@router.get("/admin/dump_memories", operation_id="dump_all_memories")
+@router.get("/admin/dump_memories", operation_id="dump_all_memory_entries")
 def dump_all_memories(limit: int = 20):
     results = client.scroll(
         collection_name="panai_memory",
@@ -699,7 +699,7 @@ def dump_all_memories(limit: int = 20):
 # Qdrant does not support filtering on null/missing vectors directly.
 # As a workaround, this endpoint will fetch the first `limit` entries (with no filter)
 # and attempt to re-embed those whose vector is missing or None.
-@router.post("/admin/reembed_missing", operation_id="reembed_missing")
+@router.post("/admin/reembed_missing", operation_id="reembed_missing_vectors")
 def reembed_missing(limit: int = 100):
     results = client.scroll(
         collection_name="panai_memory",
