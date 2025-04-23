@@ -621,10 +621,15 @@ async def sync_all_peers():
         print("[Memory Sync] Malformed nodes.json: expected a dict or list under 'nodes'.")
         return
 
+    # Debug print: node status and services
+    for name, node in nodes_dict.items():
+        print(f"[Memory Sync] Node '{name}': status={node.get('status')}, services={node.get('services')}")
+
+    # Optionally: include all nodes with the "memory" service
     peer_urls = [
         node.get("hostname")
         for name, node in nodes_dict.items()
-        if node.get("status") == "active"
+        if "memory" in node.get("services", [])
     ]
     print(f"[Memory Sync] Peer nodes loaded: {list(nodes_dict.keys())}")
     print(f"[Memory Sync] Target peer URLs for sync: {peer_urls}")
