@@ -20,16 +20,15 @@ torch.set_num_threads(14)  # Reserve 1–2 threads for system processes
 # router definition
 router = APIRouter()
 
-# app definition (managed in main.py)
-# app = FastAPI()
+# FastAPI app instance and router inclusion
+app = FastAPI()
+app.include_router(router)
 
 # Ensure memory_log.json exists
 if not os.path.exists("memory_log.json"):
     with open("memory_log.json", "w") as f:
         json.dump([], f)
 
-# app = FastAPI()
-# app.include_router(router)
 client = QdrantClient(host="localhost", port=6333)
 
 # Load all-mpnet-base-v2 model for embedding (768-dimension)
