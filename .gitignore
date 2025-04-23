@@ -14,3 +14,9 @@ audit_log/
 # Mac-specific
 .DS_Store
 mesh_chat_log.jsonl
+
+# PanAI local state (not tracked by Git)
+memory_log.json
+nodes.json
+qdrant_data/
+!qdrant_data/.gitkeep
