@@ -618,6 +618,8 @@ async def sync_all_peers():
         for name, node in nodes_dict.items()
         if node.get("status") == "active"
     ]
+    print(f"[Memory Sync] Peer nodes loaded: {list(nodes_dict.keys())}")
+    print(f"[Memory Sync] Target peer URLs for sync: {peer_urls}")
 
     async def sync_peer(peer):
         if peer:
