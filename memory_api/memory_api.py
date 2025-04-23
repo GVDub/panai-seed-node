@@ -791,4 +791,16 @@ async def start_background_tasks():
         except Exception as e:
             print(f"[Startup ERROR] Failed to load nodes.json: {e}")
 
+    # Ensure memory_log.json is valid JSON list, else reinitialize
+    log_path = os.path.join(base_dir, "memory_log.json")
+    try:
+        with open(log_path, "r+") as f:
+            data = json.load(f)
+            if not isinstance(data, list):
+                raise ValueError("memory_log.json does not contain a list.")
+    except Exception as e:
+        print(f"[Startup] Reinitializing corrupt memory_log.json: {e}")
+        with open(log_path, "w") as f:
+            json.dump([], f)
+
     asyncio.create_task(memory_sync_loop())
