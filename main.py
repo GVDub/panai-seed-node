@@ -79,7 +79,7 @@ def resolve_node_name(identity_json):
 
 app = memory_app
 app.include_router(memory_router, prefix="/memory")
-app.include_router(memory_stats_router, prefix="/memory")
+app.include_router(memory_stats_router, prefix="/memory/stats")
 app.include_router(mesh_router, prefix="/mesh")
 
 async def preload_models():

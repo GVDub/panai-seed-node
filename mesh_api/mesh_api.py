@@ -1,12 +1,9 @@
-from fastapi import FastAPI
 from fastapi import APIRouter
 from datetime import datetime
 import json
 import os
 
 mesh_router = APIRouter()
-
-app = FastAPI()
 
 NODES_FILE = "nodes.json"
 CHAT_LOG_FILE = "mesh_chat_log.jsonl"
@@ -22,16 +19,30 @@ def load_known_peers():
             return template_data
         else:
             print("[WARN] No nodes.json or nodes_template.json found.")
-            return {}
+            return []
     with open(NODES_FILE, "r") as f:
-        return json.load(f)
+        data = json.load(f)
+    # Transform nodes dict into a list of peer dicts
+    peers = []
+    for name, node in data.get("nodes", {}).items():
+        node_copy = node.copy()
+        node_copy["name"] = name
+        peers.append(node_copy)
+    return peers
 
 def save_peer(peer_entry):
     data = load_known_peers()
-    if peer_entry["name"] not in data:
-        data[peer_entry["name"]] = peer_entry
+    if peer_entry["name"] not in [peer.get("name") for peer in data]:
+        # Load existing data from file to preserve structure
+        if os.path.exists(NODES_FILE):
+            with open(NODES_FILE, "r") as f:
+                existing_data = json.load(f)
+        else:
+            existing_data = {"nodes": {}}
+        existing_data.setdefault("nodes", {})
+        existing_data["nodes"][peer_entry["name"]] = peer_entry
         with open(NODES_FILE, "w") as f:
-            json.dump(data, f, indent=2)
+            json.dump(existing_data, f, indent=2)
 
 def log_chat_to_mesh(chat_entry):
     with open(CHAT_LOG_FILE, "a") as f:
@@ -56,7 +67,7 @@ async def register_peer(peer_data: dict):
 
 @mesh_router.get("/peers", operation_id="list_known_peers")
 async def list_peers():
-    peers = load_known_peers().get("nodes", [])
+    peers = load_known_peers()
     return peers
 
 @mesh_router.post("/log_chat", operation_id="log_chat_to_memory_mesh")
@@ -84,8 +95,3 @@ async def log_chat(chat_data: dict):
     return {"message": "Chat entry logged to mesh"}
 
 router = mesh_router
-
-
-@app.on_event("startup")
-async def ensure_nodes_file():
-    load_known_peers()

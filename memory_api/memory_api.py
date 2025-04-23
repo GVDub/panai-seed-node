@@ -12,6 +12,7 @@ from fastapi import FastAPI, APIRouter, Request
 from pydantic import BaseModel
 from qdrant_client import QdrantClient
 from sentence_transformers import SentenceTransformer
+import socket
 
 import requests
 import torch
@@ -625,11 +626,16 @@ async def sync_all_peers():
     for name, node in nodes_dict.items():
         print(f"[Memory Sync] Node '{name}': status={node.get('status')}, services={node.get('services')}")
 
-    # Optionally: include all nodes with the "memory" service
+    # Determine local hostname to exclude self from peer list
+    local_fqdn = socket.getfqdn()
+    print(f"[Memory Sync] Local node hostname: {local_fqdn}")
+
+    # Optionally: include all nodes with the "memory" service, excluding self
     peer_urls = [
         node.get("hostname")
         for name, node in nodes_dict.items()
         if "memory" in node.get("services", [])
+           and node.get("hostname") != local_fqdn
     ]
     print(f"[Memory Sync] Peer nodes loaded: {list(nodes_dict.keys())}")
     print(f"[Memory Sync] Target peer URLs for sync: {peer_urls}")
