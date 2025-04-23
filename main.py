@@ -9,6 +9,8 @@ import logging
 import os
 import requests
 import socket
+from zeroconf import Zeroconf, ServiceInfo
+SERVICE_TYPE = "_panai-memory._tcp.local."
 import time
 
 from memory_api.memory_api import (
@@ -138,6 +140,18 @@ async def periodic_health_check():
 
 @app.on_event("startup")
 async def startup_tasks():
+    # Register mDNS service for local discovery
+    zeroconf = Zeroconf()
+    service_name = f"{socket.gethostname()}._panai-memory._tcp.local."
+    info = ServiceInfo(
+        SERVICE_TYPE,
+        service_name,
+        addresses=[socket.inet_aton(socket.gethostbyname(socket.gethostname()))],
+        port=8000,
+        properties={b"name": socket.gethostname()}
+    )
+    zeroconf.register_service(info)
+    print(f"[Startup] Registered mDNS service: {service_name}")
     asyncio.create_task(preload_models())
     asyncio.create_task(periodic_health_check())
     asyncio.create_task(memory_sync_loop())

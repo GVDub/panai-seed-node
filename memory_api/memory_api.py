@@ -14,6 +14,10 @@ from qdrant_client import QdrantClient
 from sentence_transformers import SentenceTransformer
 import socket
 
+# Zeroconf/mDNS imports for LAN peer discovery
+from zeroconf import Zeroconf, ServiceBrowser, ServiceStateChange
+SERVICE_TYPE = "_panai-memory._tcp.local."
+
 import requests
 import torch
 torch.set_num_threads(14)  # Reserve 1–2 threads for system processes
@@ -602,6 +606,23 @@ async def sync_all_peers():
     import json
     import os
 
+    # ZeroConf mDNS discovery for local LAN peers
+    local_peers = set()
+    def on_service_state_change(zeroconf, service_type, name, state_change):
+        if state_change is ServiceStateChange.Added:
+            info = zeroconf.get_service_info(service_type, name)
+            if info and info.addresses:
+                ip = socket.inet_ntoa(info.addresses[0])
+                # skip self by IP
+                if ip != socket.gethostbyname(socket.gethostname()):
+                    local_peers.add(f"{ip}:8000")
+    zeroconf = Zeroconf()
+    browser = ServiceBrowser(zeroconf, SERVICE_TYPE, handlers=[on_service_state_change])
+    # Give mDNS a moment to discover peers
+    await asyncio.sleep(2)
+    zeroconf.close()
+    print(f"[Memory Sync] Discovered LAN peers via mDNS: {local_peers}")
+
     nodes_file = os.path.join(os.path.dirname(__file__), "..", "nodes.json")
     if not os.path.exists(nodes_file):
         print(f"[Memory Sync] nodes.json not found at expected path: {nodes_file}")
@@ -645,6 +666,10 @@ async def sync_all_peers():
         peer_urls.append(hostname)
     print(f"[Memory Sync] Target peer URLs for sync: {peer_urls}")
 
+    # Merge dynamic LAN peers with static nodes.json peers
+    combined_peers = list(local_peers) + [url for url in peer_urls if url not in local_peers]
+    print(f"[Memory Sync] Combined peer URLs: {combined_peers}")
+
     async def sync_peer(peer):
         if peer:
             # Ensure default port 8000 for peer sync endpoint
@@ -652,7 +677,6 @@ async def sync_all_peers():
             if ":" not in peer:
                 host = f"{peer}:8000"
             url = f"http://{host}/memory/sync_with_peer"
-            # print(f"[Memory Sync] Attempting sync with {url}...")
             try:
                 async with httpx.AsyncClient(timeout=10.0) as client_async:
                     peer_endpoint = url
@@ -664,11 +688,10 @@ async def sync_all_peers():
                         json={"peer_url": local_base_url, "limit": 10}
                     )
                     res.raise_for_status()
-                    # print(f"[Memory Sync] Synced with {url}: {res.json()}")
             except Exception as e:
                 print(f"[Memory Sync] Failed to sync with {url}: {e}")
 
-    await asyncio.gather(*(sync_peer(peer) for peer in peer_urls))
+    await asyncio.gather(*(sync_peer(peer) for peer in combined_peers))
     # print(f"[Memory Sync Loop] {datetime.utcnow().isoformat()} - Peer sync completed.")
 
 async def memory_sync_loop():
