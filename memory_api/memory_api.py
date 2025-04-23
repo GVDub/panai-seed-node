@@ -22,6 +22,16 @@ router = APIRouter()
 
 # FastAPI app instance and router inclusion
 app = FastAPI()
+
+# Auto-generate nodes.json from nodes_template.json if missing
+template_path = os.path.join(os.path.dirname(__file__), "..", "nodes_template.json")
+nodes_path = os.path.join(os.path.dirname(__file__), "..", "nodes.json")
+
+if not os.path.exists(nodes_path) and os.path.exists(template_path):
+    with open(template_path, "r") as src, open(nodes_path, "w") as dst:
+        dst.write(src.read())
+        print(f"[Startup] Copied nodes_template.json to nodes.json.")
+
 app.include_router(router)
 
 # Ensure memory_log.json exists
