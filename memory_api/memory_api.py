@@ -70,6 +70,16 @@ def log_generic_memory(text: str, session_id: str, tags: List[str]):
         }
     }
     client.upsert(collection_name="panai_memory", points=[point])
+    # Also append to memory_log.json for testing/dev visibility
+    try:
+        with open("memory_log.json", "r+") as f:
+            log = json.load(f)
+            log.append(point["payload"])
+            f.seek(0)
+            json.dump(log, f, indent=2)
+            f.truncate()
+    except Exception as e:
+        print(f"[Warning] Could not write to memory_log.json: {e}")
     return point["id"]
 
 def query_and_generate(session_id: str, tags: List[str], prompt_template: str, model: str = "mistral-nemo", limit: int = 25) -> str:
@@ -740,5 +750,13 @@ async def start_background_tasks():
         print(f"[Startup WARNING] nodes.json was expected to be created but is still missing at: {nodes_path}")
     elif os.path.exists(nodes_path):
         print(f"[Startup OK] nodes.json confirmed present at: {nodes_path}")
+        # Additional check to validate the content of nodes.json
+        try:
+            with open(nodes_path, "r") as f:
+                data = json.load(f)
+            if "nodes" not in data or not isinstance(data["nodes"], list):
+                print(f"[Startup WARNING] nodes.json is present but 'nodes' key is missing or malformed.")
+        except Exception as e:
+            print(f"[Startup ERROR] Failed to load nodes.json: {e}")
 
     asyncio.create_task(memory_sync_loop())
