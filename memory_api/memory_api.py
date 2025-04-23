@@ -735,4 +735,10 @@ async def start_background_tasks():
     else:
         print(f"[Startup] nodes.json already exists or template is missing.")
 
+    # Explicitly print confirmation if nodes.json is not being created
+    if not os.path.exists(nodes_path):
+        print(f"[Startup WARNING] nodes.json was expected to be created but is still missing at: {nodes_path}")
+    elif os.path.exists(nodes_path):
+        print(f"[Startup OK] nodes.json confirmed present at: {nodes_path}")
+
     asyncio.create_task(memory_sync_loop())
