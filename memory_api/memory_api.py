@@ -23,14 +23,6 @@ router = APIRouter()
 # FastAPI app instance and router inclusion
 app = FastAPI()
 
-# Auto-generate nodes.json from nodes_template.json if missing
-template_path = os.path.join(os.path.dirname(__file__), "..", "nodes_template.json")
-nodes_path = os.path.join(os.path.dirname(__file__), "..", "nodes.json")
-
-if not os.path.exists(nodes_path) and os.path.exists(template_path):
-    with open(template_path, "r") as src, open(nodes_path, "w") as dst:
-        dst.write(src.read())
-        print(f"[Startup] Copied nodes_template.json to nodes.json.")
 
 app.include_router(router)
 
@@ -727,4 +719,20 @@ def reembed_missing(limit: int = 100):
 @app.on_event("startup")
 async def start_background_tasks():
     print("[Startup] Entered start_background_tasks() and launching memory sync background task.")
+
+    # Ensure nodes.json is created from template if missing
+    base_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
+    template_path = os.path.join(base_dir, "nodes_template.json")
+    nodes_path = os.path.join(base_dir, "nodes.json")
+
+    if not os.path.exists(nodes_path) and os.path.exists(template_path):
+        try:
+            with open(template_path, "r") as src, open(nodes_path, "w") as dst:
+                dst.write(src.read())
+            print(f"[Startup] Copied nodes_template.json to nodes.json at: {nodes_path}")
+        except Exception as e:
+            print(f"[Startup ERROR] Failed to copy nodes_template.json: {e}")
+    else:
+        print(f"[Startup] nodes.json already exists or template is missing.")
+
     asyncio.create_task(memory_sync_loop())
