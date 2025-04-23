@@ -1,7 +1,7 @@
 services:
   qdrant:
     image: qdrant/qdrant:latest
-    container_name: panai-qdrant
+    container_name: qdrant
     ports:
       - "6333:6333"
     volumes:
