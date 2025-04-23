@@ -56,7 +56,7 @@ async def register_peer(peer_data: dict):
 
 @mesh_router.get("/peers", operation_id="list_known_peers")
 async def list_peers():
-    peers = load_known_peers()
+    peers = load_known_peers().get("nodes", [])
     return peers
 
 @mesh_router.post("/log_chat", operation_id="log_chat_to_memory_mesh")
