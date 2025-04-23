@@ -648,7 +648,9 @@ async def memory_sync_loop():
     """Periodically sync memory entries with known peers."""
     print("[Memory Sync Loop] Performing initial sync...")
     try:
+        print(f"[Memory Sync Loop] About to run sync_all_peers at {datetime.utcnow().isoformat()}")
         await sync_all_peers()  # <-- run initial sync at startup
+        print(f"[Memory Sync Loop] sync_all_peers finished at {datetime.utcnow().isoformat()}")
         print(f"[Memory Sync Loop] {datetime.utcnow().isoformat()} - Initial sync complete.")
     except Exception as e:
         print(f"[Memory Sync Loop] ERROR during initial sync: {e}")
@@ -658,7 +660,9 @@ async def memory_sync_loop():
             print(f"[Memory Sync Loop] {datetime.utcnow().isoformat()} - Sleeping 5 minutes...")
             await asyncio.sleep(300)
             print(f"[Memory Sync Loop] {datetime.utcnow().isoformat()} - Running periodic sync...")
+            print(f"[Memory Sync Loop] About to run sync_all_peers at {datetime.utcnow().isoformat()}")
             await sync_all_peers()
+            print(f"[Memory Sync Loop] sync_all_peers finished at {datetime.utcnow().isoformat()}")
             print(f"[Memory Sync Loop] {datetime.utcnow().isoformat()} - Periodic sync complete.")
         except Exception as e:
             print(f"[Memory Sync Loop] ERROR: {e}")
