@@ -439,16 +439,24 @@ class SyncRequest(BaseModel):
 @router.post("/sync_with_peer", operation_id="sync_memory_with_peer")
 async def sync_with_peer(req: SyncRequest):
     matching = []
+
+    # Build scroll_filter using new logic
     scroll_filter = {}
+
+    # Default to broad inclusion if session_id and tags not provided
     must_conditions = []
     if req.session_id:
         must_conditions.append({"key": "session_id", "match": {"value": req.session_id}})
-    if must_conditions:
-        scroll_filter["must"] = must_conditions
+    if not must_conditions:
+        # Ensure some inclusion filter to avoid empty filter bug in Qdrant
+        must_conditions.append({"key": "text", "match": {"value": ""}})  # Match any with text field present
+
+    scroll_filter["must"] = must_conditions
+
     if req.tags:
         scroll_filter["should"] = [{"key": "tags", "match": {"value": tag.lower()}} for tag in req.tags]
 
-    # Exclude memories that already have the tag synced:{peer_url}
+    # Always exclude entries already synced to this peer
     if req.peer_url:
         exclude_tag = f"synced:{req.peer_url}"
         scroll_filter["must_not"] = [{"key": "tags", "match": {"value": exclude_tag}}]
