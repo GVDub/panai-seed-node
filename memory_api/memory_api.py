@@ -627,12 +627,18 @@ async def sync_all_peers():
     local_names = {local_short, local_fqdn, "localhost"}
     print(f"[Memory Sync] Local host names: short={local_short}, fqdn={local_fqdn}")
 
-    # Include all nodes with the "memory" service, excluding self
-    peer_urls = [
-        node.get("hostname")
-        for node in nodes_list
-        if "memory" in node.get("services", []) and node.get("hostname") not in local_names
-    ]
+    # Include all nodes with the "memory" service, excluding self and local aliases
+    peer_urls = []
+    for node in nodes_list:
+        hostname = node.get("hostname")
+        # skip nodes without the memory service
+        if "memory" not in node.get("services", []):
+            continue
+        # skip if hostname contains any local identifier
+        if any(local_name in hostname for local_name in local_names):
+            print(f"[Memory Sync] Excluding self or local alias: {hostname}")
+            continue
+        peer_urls.append(hostname)
     print(f"[Memory Sync] Target peer URLs for sync: {peer_urls}")
 
     async def sync_peer(peer):
