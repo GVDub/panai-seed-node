@@ -79,7 +79,11 @@ def log_generic_memory(text: str, session_id: str, tags: List[str]):
     # Also append to memory_log.json for testing/dev visibility
     try:
         with open("memory_log.json", "r+") as f:
-            log = json.load(f)
+            try:
+                log = json.load(f)
+            except json.JSONDecodeError as e:
+                print(f"[Warning] memory_log.json parse error: {e}. Reinitializing log.")
+                log = []
             log.append(point["payload"])
             f.seek(0)
             json.dump(log, f, indent=2)
