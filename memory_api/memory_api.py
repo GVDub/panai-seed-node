@@ -509,6 +509,7 @@ async def sync_with_peer(req: SyncRequest):
             except Exception as e:
                 print(f"Failed to sync memory entry: {e}")
 
+    print(f"[Memory Sync] Synced {successes}/{len(matching)} entries to {req.peer_url}")
     return {
         "peer": req.peer_url,
         "attempted": len(matching),
@@ -621,6 +622,10 @@ async def sync_all_peers():
             # print(f"[Memory Sync] Attempting sync with {url}...")
             try:
                 async with httpx.AsyncClient(timeout=10.0) as client_async:
+                    peer_endpoint = url
+                    if not peer_endpoint.startswith("http://") and not peer_endpoint.startswith("https://"):
+                        peer_endpoint = f"http://{peer_endpoint}"
+                    print(f"[Memory Sync] Syncing with peer at {peer_endpoint}")
                     res = await client_async.post(
                         url,
                         json={"peer_url": "http://localhost:8000", "limit": 10}
