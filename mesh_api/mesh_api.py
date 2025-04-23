@@ -9,12 +9,19 @@ NODES_FILE = "nodes.json"
 CHAT_LOG_FILE = "mesh_chat_log.jsonl"
 
 def load_known_peers():
-    try:
-        with open(NODES_FILE, "r") as f:
-            data = json.load(f)
-            return data
-    except FileNotFoundError:
-        return {}
+    if not os.path.exists(NODES_FILE):
+        if os.path.exists("nodes_template.json"):
+            print("[INFO] nodes.json not found; creating from nodes_template.json")
+            with open("nodes_template.json", "r") as template_file:
+                template_data = json.load(template_file)
+            with open(NODES_FILE, "w") as f:
+                json.dump(template_data, f, indent=2)
+            return template_data
+        else:
+            print("[WARN] No nodes.json or nodes_template.json found.")
+            return {}
+    with open(NODES_FILE, "r") as f:
+        return json.load(f)
 
 def save_peer(peer_entry):
     data = load_known_peers()
