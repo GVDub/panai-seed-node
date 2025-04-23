@@ -453,16 +453,14 @@ async def sync_with_peer(req: SyncRequest):
         exclude_tag = f"synced:{req.peer_url}"
         scroll_filter["must_not"] = [{"key": "tags", "match": {"value": exclude_tag}}]
 
-    # print(f"[DEBUG] Sync scroll filter: {scroll_filter}")
-    # print(f"[DEBUG] Using Qdrant client: {client}")
-    # print(f"[DEBUG] Scroll filter being sent to Qdrant: {scroll_filter}")
+    # Print sync request details
+    print(f"[SyncWithPeer] Received sync request from {req.peer_url} — Tags: {req.tags}, Session: {req.session_id}")
 
     results = client.scroll(
         collection_name="panai_memory",
         scroll_filter=scroll_filter,
         limit=req.limit
     )
-    # print(f"[DEBUG] Scroll returned {len(results[0])} items")
     for point in results[0]:
         matching.append({
             "id": point.id,
@@ -472,9 +470,7 @@ async def sync_with_peer(req: SyncRequest):
             "tags": point.payload.get("tags", [])
         })
 
-    # print(f"[DEBUG] Prepared for sync ({len(matching)} items):")
     for m in matching:
-        # print(f" - {m['session_id']} | {m['text'][:40]}...")
         pass
 
     successes = 0
@@ -490,15 +486,12 @@ async def sync_with_peer(req: SyncRequest):
                 print(f"[DEBUG] Skipping memory without vector: {entry['text'][:50]}")
                 continue
 
-            # print(f"[DEBUG] Syncing memory to {req.peer_url} - session: {entry['session_id']}, text: {entry['text'][:50]}")
-            # print(f"[DEBUG] Payload: {entry}")
             try:
                 # Begin constructing peer endpoint
                 peer_endpoint = req.peer_url
                 if not peer_endpoint.startswith("http://") and not peer_endpoint.startswith("https://"):
                     peer_endpoint = f"http://{peer_endpoint}"
                 res = await client_async.post(f"{peer_endpoint}/memory/log_memory", json=entry)
-                # print(f"[DEBUG] Response status: {res.status_code}, content: {res.text}")
                 res.raise_for_status()
                 # After successful sync, update the entry's tags if not already present
                 tag = f"synced:{req.peer_url}"
@@ -522,6 +515,8 @@ async def sync_with_peer(req: SyncRequest):
                 print(f"Failed to sync memory entry: {e}")
 
     print(f"[Memory Sync] Synced {successes}/{len(matching)} entries to {req.peer_url}")
+    # Print attempted/successful sync before returning
+    print(f"[SyncWithPeer] Attempted {len(matching)}, synced {successes} to {req.peer_url}")
     return {
         "peer": req.peer_url,
         "attempted": len(matching),
