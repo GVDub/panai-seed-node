@@ -21,7 +21,7 @@ torch.set_num_threads(14)  # Reserve 1–2 threads for system processes
 router = APIRouter()
 
 # app definition (managed in main.py)
-app = FastAPI()
+# app = FastAPI()
 
 # Ensure memory_log.json exists
 if not os.path.exists("memory_log.json"):
