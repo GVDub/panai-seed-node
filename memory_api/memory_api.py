@@ -627,6 +627,10 @@ async def sync_all_peers():
     local_names = {local_short, local_fqdn, "localhost"}
     print(f"[Memory Sync] Local host names: short={local_short}, fqdn={local_fqdn}")
 
+    # Determine local base URL for peer sync (reporting to peers)
+    local_base_url = f"http://{local_fqdn}:8000"
+    print(f"[Memory Sync] Using local base URL: {local_base_url}")
+
     # Include all nodes with the "memory" service, excluding self and local aliases
     peer_urls = []
     for node in nodes_list:
@@ -657,7 +661,7 @@ async def sync_all_peers():
                     print(f"[Memory Sync] Syncing with peer at {peer_endpoint}")
                     res = await client_async.post(
                         url,
-                        json={"peer_url": "http://localhost:8000", "limit": 10}
+                        json={"peer_url": local_base_url, "limit": 10}
                     )
                     res.raise_for_status()
                     # print(f"[Memory Sync] Synced with {url}: {res.json()}")
