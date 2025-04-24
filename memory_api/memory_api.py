@@ -454,7 +454,7 @@ async def sync_with_peer(req: SyncRequest):
         must_conditions.append({"key": "session_id", "match": {"value": req.session_id}})
     if not must_conditions:
         # Ensure some inclusion filter to avoid empty filter bug in Qdrant
-        must_conditions.append({"key": "text", "match": {"value": ""}})  # Match any with text field present
+        must_conditions.append({"key": "session_id", "match": {"value": req.session_id or "default"}})
 
     scroll_filter["must"] = must_conditions
 
@@ -486,17 +486,23 @@ async def sync_with_peer(req: SyncRequest):
     for m in matching:
         pass
 
+    # Add counters for skipped entries and reasons
+    skipped_vectorless = 0
+    skipped_already_synced = 0
+
     successes = 0
     async with httpx.AsyncClient(timeout=10.0) as client_async:
         for entry in matching:
             # Skip if already synced to this peer
             if f"synced:{req.peer_url}" in entry["tags"]:
                 print(f"[DEBUG] Entry already synced to {req.peer_url}, skipping.")
+                skipped_already_synced += 1
                 continue
 
             # Skip if vector is missing
             if entry.get("vector") is None:
                 print(f"[DEBUG] Skipping memory without vector: {entry['text'][:50]}")
+                skipped_vectorless += 1
                 continue
 
             try:
@@ -530,6 +536,8 @@ async def sync_with_peer(req: SyncRequest):
     print(f"[Memory Sync] Synced {successes}/{len(matching)} entries to {req.peer_url}")
     # Print attempted/successful sync before returning
     print(f"[SyncWithPeer] Attempted {len(matching)}, synced {successes} to {req.peer_url}")
+    print(f"[SyncWithPeer] Skipped {skipped_vectorless} entries without vectors.")
+    print(f"[SyncWithPeer] Skipped {skipped_already_synced} entries already tagged as synced.")
     return {
         "peer": req.peer_url,
         "attempted": len(matching),
