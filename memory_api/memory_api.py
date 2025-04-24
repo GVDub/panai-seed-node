@@ -651,6 +651,8 @@ async def sync_all_peers():
     # Give mDNS a moment to discover peers
     await asyncio.sleep(2)
     zeroconf.close()
+    # Filter out localhost variants from mDNS-discovered peers
+    local_peers = {peer for peer in local_peers if not peer.startswith("127.") and "localhost" not in peer}
     print(f"[Memory Sync] Discovered LAN peers via mDNS: {local_peers}")
 
     nodes_file = os.path.join(os.path.dirname(__file__), "..", "nodes.json")
