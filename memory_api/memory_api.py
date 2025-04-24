@@ -80,6 +80,7 @@ def log_generic_memory(text: str, session_id: str, tags: List[str]):
 
     vector = embed_text(text)
     self_host = socket.gethostname()
+    local_peer_tag = f"synced:http://{socket.getfqdn()}:8000"
     point = {
         "id": str(uuid.uuid4()),
         "vector": vector,
@@ -87,7 +88,7 @@ def log_generic_memory(text: str, session_id: str, tags: List[str]):
             "text": text,
             "timestamp": datetime.now(timezone.utc).isoformat(),
             "session_id": session_id,
-            "tags": list(set(tag.lower() for tag in tags + [session_id, f"synced:{self_host}"])),
+            "tags": list(set(tag.lower() for tag in tags + [session_id, local_peer_tag])),
         }
     }
     client.upsert(collection_name="panai_memory", points=[point])
@@ -473,7 +474,10 @@ async def sync_with_peer(req: SyncRequest):
 
     # Always exclude entries already synced to this peer
     if req.peer_url:
-        exclude_tag = f"synced:{req.peer_url}"
+        normalized_peer_url = req.peer_url
+        if not normalized_peer_url.startswith("http://") and not normalized_peer_url.startswith("https://"):
+            normalized_peer_url = f"http://{normalized_peer_url}:8000"
+        exclude_tag = f"synced:{normalized_peer_url}"
         scroll_filter["must_not"] = [{"key": "tags", "match": {"value": exclude_tag}}]
 
     # Print sync request details
