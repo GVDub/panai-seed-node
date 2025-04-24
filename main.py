@@ -150,8 +150,11 @@ async def startup_tasks():
         port=8000,
         properties={b"name": socket.gethostname()}
     )
-    zeroconf.register_service(info)
-    print(f"[Startup] Registered mDNS service: {service_name}")
+    loop = asyncio.get_running_loop()
+    loop.run_in_executor(None, zeroconf.register_service, info)
+    print(f"[Startup] Scheduled mDNS registration for service: {service_name}")
+    # zeroconf.register_service(info)
+    # print(f"[Startup] Registered mDNS service: {service_name}")
     asyncio.create_task(preload_models())
     asyncio.create_task(periodic_health_check())
     asyncio.create_task(memory_sync_loop())
