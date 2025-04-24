@@ -454,6 +454,14 @@ class SyncRequest(BaseModel):
 
 @router.post("/sync_with_peer", operation_id="sync_memory_with_peer")
 async def sync_with_peer(req: SyncRequest):
+    # Prevent self-syncing based on peer_url
+    local_hostnames = {socket.gethostname(), socket.getfqdn(), "localhost"}
+    if req.peer_url:
+        peer_host = req.peer_url.replace("http://", "").replace("https://", "").split(":")[0]
+        if peer_host in local_hostnames:
+            print(f"[SyncWithPeer] Skipping self-sync with {req.peer_url}")
+            return {"peer": req.peer_url, "attempted": 0, "synced": 0}
+
     matching = []
 
     # Build scroll_filter using new logic
