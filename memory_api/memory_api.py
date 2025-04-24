@@ -56,7 +56,7 @@ def log_generic_memory(text: str, session_id: str, tags: List[str]):
     # Deduplication check before embedding
     existing = client.scroll(
         collection_name="panai_memory",
-        filter={
+        scroll_filter={
             "must": [
                 {"key": "session_id", "match": {"value": session_id}},
                 {"key": "text", "match": {"value": text}}
@@ -102,7 +102,7 @@ def log_generic_memory(text: str, session_id: str, tags: List[str]):
 def query_and_generate(session_id: str, tags: List[str], prompt_template: str, model: str = "mistral-nemo", limit: int = 25) -> str:
     results = client.scroll(
         collection_name="panai_memory",
-        filter={
+        scroll_filter={
             "must": [
                 {"key": "session_id", "match": {"value": session_id}},
                 *([{"key": "tags", "match": {"value": tag}} for tag in tags] if tags else [])
@@ -122,7 +122,7 @@ def query_and_generate(session_id: str, tags: List[str], prompt_template: str, m
 async def query_and_generate_async(session_id: str, tags: List[str], prompt_template: str, model: str = "mistral-nemo", limit: int = 25) -> str:
     results = client.scroll(
         collection_name="panai_memory",
-        filter={
+        scroll_filter={
             "must": [
                 {"key": "session_id", "match": {"value": session_id}},
                 *([{"key": "tags", "match": {"value": tag}} for tag in tags] if tags else [])
@@ -192,7 +192,7 @@ def search_by_tag(request: TagQuery, req: Request):
     print(f"[TAG SEARCH] From {req.client.host}, Tags: {request.tags}")
     results = client.scroll(
         collection_name="panai_memory",
-        filter={
+        scroll_filter={
             "must": [
                 *([{"key": "tags", "match": {"value": tag.lower()}} for tag in request.tags] if request.tags else [])
             ]
@@ -220,7 +220,7 @@ def summarize_session(request: SummaryRequest):
     # Pull matching memories
     results = client.scroll(
         collection_name="panai_memory",
-        filter={
+        scroll_filter={
             "must": [
                 {"key": "session_id", "match": {"value": request.session_id}}
             ]
@@ -726,7 +726,7 @@ __all__ = ["router", "log_memory", "store_synced_memory", "MemoryEntry", "stats_
 def dump_all_memories(limit: int = 20):
     results = client.scroll(
         collection_name="panai_memory",
-        filter={},  # no filter
+        scroll_filter={},  # no filter
         limit=limit
     )
     return {
@@ -749,7 +749,7 @@ def dump_all_memories(limit: int = 20):
 def reembed_missing(limit: int = 100):
     results = client.scroll(
         collection_name="panai_memory",
-        filter={},  # Qdrant does not support 'vector is None' filter directly
+        scroll_filter={},  # Qdrant does not support 'vector is None' filter directly
         limit=limit
     )
     reembedded = 0
