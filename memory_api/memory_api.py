@@ -79,6 +79,7 @@ def log_generic_memory(text: str, session_id: str, tags: List[str]):
         return None
 
     vector = embed_text(text)
+    self_host = socket.gethostname()
     point = {
         "id": str(uuid.uuid4()),
         "vector": vector,
@@ -86,7 +87,7 @@ def log_generic_memory(text: str, session_id: str, tags: List[str]):
             "text": text,
             "timestamp": datetime.now(timezone.utc).isoformat(),
             "session_id": session_id,
-            "tags": list(set(tag.lower() for tag in tags + [session_id])),
+            "tags": list(set(tag.lower() for tag in tags + [session_id, f"synced:{self_host}"])),
         }
     }
     client.upsert(collection_name="panai_memory", points=[point])
