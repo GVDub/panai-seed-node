@@ -657,7 +657,13 @@ async def sync_all_peers():
 
     # Debug print: node status and services
     for node in nodes_list:
-        print(f"[Memory Sync] Node '{node.get('name')}': status={node.get('status')}, services={node.get('services')}")
+        # Use 'hostname' if present, else fallback to 'ip' or 'name'
+        host = node.get('hostname')
+        if not host:
+            host = node.get('ip') or node.get('name') or 'UNKNOWN_HOST'
+            print(f"[Memory Sync WARNING] Node entry missing 'hostname'. Using fallback: {host}. Node: {node}")
+        else:
+            print(f"[Memory Sync] Node '{host}': status={node.get('status')}, services={node.get('services')}")
 
     # Determine local hostnames to exclude self from peer list
     local_short = socket.gethostname()
@@ -681,7 +687,23 @@ async def sync_all_peers():
     # Include all nodes with the "memory" service, excluding self and local aliases
     peer_urls = []
     for node in nodes_list:
+        # Use 'hostname' if present, else fallback to 'ip' or 'name'
         hostname = node.get("hostname")
+        peer_display = None
+        if not hostname:
+            # Try fallback to ip or name
+            hostname = node.get("ip")
+            if hostname:
+                peer_display = f"[Fallback to IP] {hostname}"
+            else:
+                hostname = node.get("name")
+                if hostname:
+                    peer_display = f"[Fallback to 'name'] {hostname}"
+                else:
+                    print(f"[Memory Sync WARNING] Node entry missing both 'hostname', 'ip', and 'name': {node}")
+                    continue
+        else:
+            peer_display = hostname
         # skip nodes without the memory service
         if "memory" not in node.get("services", []):
             continue
@@ -689,6 +711,7 @@ async def sync_all_peers():
         if any(local_name in hostname for local_name in local_names):
             print(f"[Memory Sync] Excluding self or local alias: {hostname}")
             continue
+        print(f"[Memory Sync] Preparing to sync with peer: {peer_display}")
         peer_urls.append(hostname)
     print(f"[Memory Sync] Target peer URLs for sync: {peer_urls}")
 
