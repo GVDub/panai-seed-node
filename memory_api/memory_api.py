@@ -644,7 +644,16 @@ async def sync_all_peers():
 
     # Determine local hostnames to exclude self from peer list
     local_short = socket.gethostname()
-    local_fqdn = socket.getfqdn()
+    def get_local_ip():
+        s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+        try:
+            s.connect(("8.8.8.8", 80))
+            return s.getsockname()[0]
+        except Exception:
+            return "127.0.0.1"
+        finally:
+            s.close()
+    local_fqdn = get_local_ip()
     local_names = {local_short, local_fqdn, "localhost"}
     print(f"[Memory Sync] Local host names: short={local_short}, fqdn={local_fqdn}")
 
