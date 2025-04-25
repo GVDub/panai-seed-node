@@ -43,6 +43,7 @@ embed_model = SentenceTransformer("sentence-transformers/all-mpnet-base-v2")
 
 
 
+
 def embed_text(text: str) -> list:
     try:
         vector = embed_model.encode(text, normalize_embeddings=True).tolist()
@@ -54,6 +55,18 @@ def embed_text(text: str) -> list:
     except Exception as e:
         print(f"[Embedding EXCEPTION] Failed to embed: {text[:50]} — {e}")
         return None
+
+# --- Begin get_local_identity function ---
+def get_local_identity():
+    try:
+        s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+        s.connect(("8.8.8.8", 80))
+        ip = s.getsockname()[0]
+        s.close()
+        return ip
+    except Exception:
+        return socket.gethostbyname(socket.gethostname())
+# --- End get_local_identity function ---
 
 def log_generic_memory(text: str, session_id: str, tags: List[str]):
     if not text.strip():
@@ -80,7 +93,7 @@ def log_generic_memory(text: str, session_id: str, tags: List[str]):
 
     vector = embed_text(text)
     self_host = socket.gethostname()
-    local_peer_tag = f"synced:http://{socket.getfqdn()}:8000"
+    local_peer_tag = f"synced:http://{get_local_identity()}:8000"
     point = {
         "id": str(uuid.uuid4()),
         "vector": vector,
@@ -456,6 +469,9 @@ class SyncRequest(BaseModel):
 async def sync_with_peer(req: SyncRequest):
     # Prevent self-syncing based on peer_url
     local_hostnames = {socket.gethostname(), socket.getfqdn(), "localhost"}
+    peer_url = req.peer_url
+    print("Received sync_with_peer request")
+    print(f"Request contents: {req}")
     if req.peer_url:
         peer_host = req.peer_url.replace("http://", "").replace("https://", "").split(":")[0]
         if peer_host in local_hostnames:
@@ -476,6 +492,7 @@ async def sync_with_peer(req: SyncRequest):
         must_conditions.append({"key": "session_id", "match": {"value": req.session_id or "default"}})
 
     scroll_filter["must"] = must_conditions
+    print(f"[DEBUG] Sync filter being applied:\n{json.dumps(scroll_filter, indent=2)}")
 
     if req.tags:
         scroll_filter["should"] = [{"key": "tags", "match": {"value": tag.lower()}} for tag in req.tags]
@@ -494,7 +511,8 @@ async def sync_with_peer(req: SyncRequest):
     results = client.scroll(
         collection_name="panai_memory",
         scroll_filter=scroll_filter,
-        limit=req.limit
+        limit=req.limit,
+        with_vectors=True
     )
     print(f"[DEBUG] Found {len(results[0])} candidate entries for sync before final tag checks.")
     for p in results[0]:
@@ -508,8 +526,8 @@ async def sync_with_peer(req: SyncRequest):
             "tags": point.payload.get("tags", [])
         })
 
-    for m in matching:
-        pass
+    # The old logic 'for mem in all_memories:' has been replaced by the filtered 'matching' entries above.
+    # No further broad iteration is needed; all sync and skip logic is now handled per-matching entry.
 
     # Add counters for skipped entries and reasons
     skipped_vectorless = 0
@@ -518,8 +536,9 @@ async def sync_with_peer(req: SyncRequest):
     successes = 0
     async with httpx.AsyncClient(timeout=10.0) as client_async:
         for entry in matching:
-            # Skip if already synced to this peer
-            if f"synced:{req.peer_url}" in entry["tags"]:
+            # Improved logic: check for any "synced:" tags, and specifically if already synced to this peer
+            existing_synced_tags = [tag for tag in entry["tags"] if tag.startswith("synced:")]
+            if f"synced:{req.peer_url}" in existing_synced_tags:
                 print(f"[DEBUG] Entry already synced to {req.peer_url}, skipping.")
                 skipped_already_synced += 1
                 continue
@@ -566,7 +585,7 @@ async def sync_with_peer(req: SyncRequest):
     return {
         "peer": req.peer_url,
         "attempted": len(matching),
-        "synced": successes
+        "synced": successes,
     }
 
 def store_synced_memory(entry: dict):
@@ -803,7 +822,8 @@ def dump_all_memories(limit: int = 20):
     results = client.scroll(
         collection_name="panai_memory",
         scroll_filter={},  # no filter
-        limit=limit
+        limit=limit,
+        with_vectors=True  # <-- Ensure vectors are returned
     )
     return {
         "count": len(results[0]),
@@ -826,13 +846,15 @@ def reembed_missing(limit: int = 100):
     results = client.scroll(
         collection_name="panai_memory",
         scroll_filter={},  # Qdrant does not support 'vector is None' filter directly
-        limit=limit
+        limit=limit,
+        with_vectors=True  # <-- Ensure vectors are returned
     )
     reembedded = 0
     skipped = 0
     for point in results[0]:
         # Only re-embed if vector is missing or None or empty
         vector = getattr(point, "vector", None)
+        print(f"[DEBUG] Point ID={point.id}, vector present={bool(vector)} len={len(vector) if vector else 'None'}")
         if vector is not None and isinstance(vector, list) and len(vector) > 0:
             continue
         text = point.payload.get("text", "")
