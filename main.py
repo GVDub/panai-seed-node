@@ -37,7 +37,9 @@ async def schedule_log_cleanup():
     await asyncio.sleep(30)  # Wait a bit after startup
     while True:
         try:
-            await prune_synced_logs("memory_log.json", "cleaned_log.json", days_threshold=30)
+            import aiofiles
+            from memory_api.prune_synced_logs import async_prune_synced_logs
+            await async_prune_synced_logs("memory_log.json", "cleaned_log.json", days_threshold=30)
             logger.info("[Log Cleanup] Completed scheduled memory log pruning.")
         except Exception as e:
             logger.error(f"[Log Cleanup] Error during log pruning: {e}")
