@@ -1,3 +1,17 @@
+# Utility: Normalize peer URL for consistent identity checks
+def normalize_peer_url(url: str) -> str:
+    try:
+        if url.startswith("http://") or url.startswith("https://"):
+            scheme, rest = url.split("://", 1)
+        else:
+            scheme, rest = "http", url
+        host_port = rest.split("/", 1)[0]
+        host, *port = host_port.split(":")
+        ip = socket.gethostbyname(host)
+        return f"{scheme}://{ip}:{port[0] if port else '8000'}"
+    except Exception as e:
+        print(f"[WARN] Could not normalize peer URL '{url}': {e}")
+        return url  # fallback to original
 # Standard library imports
 from typing import List
 from datetime import datetime
@@ -469,7 +483,7 @@ class SyncRequest(BaseModel):
 async def sync_with_peer(req: SyncRequest):
     # Prevent self-syncing based on peer_url
     local_hostnames = {socket.gethostname(), socket.getfqdn(), "localhost"}
-    peer_url = req.peer_url
+    peer_url = normalize_peer_url(req.peer_url)
     print("Received sync_with_peer request")
     print(f"Request contents: {req}")
     if req.peer_url:
@@ -497,10 +511,7 @@ async def sync_with_peer(req: SyncRequest):
 
     # Always exclude entries already synced to this peer
     if req.peer_url:
-        normalized_peer_url = req.peer_url
-        if not normalized_peer_url.startswith("http://") and not normalized_peer_url.startswith("https://"):
-            normalized_peer_url = f"http://{normalized_peer_url}:8000"
-        exclude_tag = f"synced:{normalized_peer_url}"
+        exclude_tag = f"synced:{peer_url}"
         scroll_filter["must_not"] = [{"key": "tags", "match": {"value": exclude_tag}}]
 
     # Print sync request details
@@ -536,8 +547,8 @@ async def sync_with_peer(req: SyncRequest):
         for entry in matching:
             # Improved logic: check for any "synced:" tags, and specifically if already synced to this peer
             existing_synced_tags = [tag for tag in entry["tags"] if tag.startswith("synced:")]
-            if f"synced:{req.peer_url}" in existing_synced_tags:
-                print(f"[DEBUG] Entry already synced to {req.peer_url}, skipping.")
+            if f"synced:{peer_url}" in existing_synced_tags:
+                print(f"[DEBUG] Entry already synced to {peer_url}, skipping.")
                 skipped_already_synced += 1
                 continue
 
@@ -555,7 +566,7 @@ async def sync_with_peer(req: SyncRequest):
                 res = await client_async.post(f"{peer_endpoint}/memory/log_memory", json=entry)
                 res.raise_for_status()
                 # After successful sync, update the entry's tags if not already present
-                tag = f"synced:{req.peer_url}"
+                tag = f"synced:{peer_url}"
                 if tag not in entry["tags"]:
                     entry["tags"].append(tag)
                     client.upsert(
