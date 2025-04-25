@@ -530,7 +530,7 @@ async def sync_with_peer(req: SyncRequest):
         matching.append({
             "id": point.id,
             "vector": point.vector,
-            "text": point.payload["text"],
+            "text": point.payload.get("text", ""),
             "session_id": point.payload["session_id"],
             "tags": point.payload.get("tags", [])
         })
