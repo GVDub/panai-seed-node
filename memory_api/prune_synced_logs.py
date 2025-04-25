@@ -178,5 +178,13 @@ def reembed_non_vector_entries(entries, embed_function, verbose=False):
         print(f"Re-embedded {reembedded_count} entries without vectors.")
     return updated_entries
 
+# Async stub for future compatibility
+async def async_prune_synced_logs(input_path, output_path, days_threshold=30):
+    """
+    Async wrapper for prune_synced_logs to allow future non-blocking I/O.
+    Currently calls the sync version directly.
+    """
+    prune_synced_logs(input_path, output_path, days_threshold)
+
 if __name__ == "__main__":
     main()

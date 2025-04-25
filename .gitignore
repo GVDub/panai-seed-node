@@ -20,3 +20,4 @@ memory_log.json
 nodes.json
 qdrant_data/
 !qdrant_data/.gitkeep
+.env

@@ -496,6 +496,9 @@ async def sync_with_peer(req: SyncRequest):
         scroll_filter=scroll_filter,
         limit=req.limit
     )
+    print(f"[DEBUG] Found {len(results[0])} candidate entries for sync before final tag checks.")
+    for p in results[0]:
+        print(f"[DEBUG] Entry ID={p.id}, session={p.payload.get('session_id')}, tags={p.payload.get('tags', [])}")
     for point in results[0]:
         matching.append({
             "id": point.id,
@@ -719,6 +722,15 @@ async def sync_all_peers():
                     continue
         else:
             peer_display = hostname
+        # --- Begin IP fallback logic ---
+        # Try to resolve hostname; if fails, fallback to IP
+        original_hostname = hostname
+        try:
+            socket.gethostbyname(hostname)
+        except socket.gaierror:
+            hostname = node.get("ip")
+            print(f"[Memory Sync] Fallback to IP: {hostname}")
+        # --- End IP fallback logic ---
         # skip nodes without the memory service
         if "memory" not in node.get("services", []):
             continue

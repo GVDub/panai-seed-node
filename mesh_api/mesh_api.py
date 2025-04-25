@@ -93,3 +93,14 @@ async def log_chat(chat_data: dict):
     return {"message": "Chat entry logged to mesh"}
 
 router = mesh_router
+
+
+# Easter egg endpoint
+@mesh_router.get("/easter_egg", operation_id="easter_egg_surprise")
+async def easter_egg():
+    return {
+        "message": "That blowed up real good!",
+        "origin": "SCTV",
+        "character": "Big Jim McBob & Billy Sol Hurok",
+        "note": "Every program needs at least one Easter egg."
+    }

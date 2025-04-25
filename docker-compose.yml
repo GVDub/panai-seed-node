@@ -1,9 +1,41 @@
+# PanAI Seed Node Docker Compose File
+# Includes:
+# - Qdrant vector database
+# - Open WebUI for local LLM interaction
+# - Watchtower for auto-updates
+#
+# Ollama is expected to run bare-metal by default.
+# You can override ports or API base URL in the .env file.version: '3.8'
+
 services:
   qdrant:
-    image: qdrant/qdrant:latest
+    image: qdrant/qdrant
     container_name: qdrant
     ports:
-      - "6333:6333"
+      - "${QDRANT_PORT:-6333}:6333"
     volumes:
-      - ./qdrant_data:/qdrant/storage
+      - qdrant_data:/qdrant/storage
     restart: unless-stopped
+
+  open-webui:
+    image: ghcr.io/open-webui/open-webui:main
+    container_name: open-webui
+    ports:
+      - "${WEBUI_PORT:-3000}:3000"
+    volumes:
+      - open-webui-data:/app/backend/data
+    environment:
+      - OLLAMA_API_BASE_URL=${OLLAMA_BASE_URL}
+    restart: unless-stopped
+
+  watchtower:
+    image: containrrr/watchtower
+    container_name: watchtower
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+    command: --cleanup --interval 86400
+    restart: unless-stopped
+
+volumes:
+  qdrant_data:
+  open-webui-data:
