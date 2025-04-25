@@ -487,9 +487,7 @@ async def sync_with_peer(req: SyncRequest):
     must_conditions = []
     if req.session_id:
         must_conditions.append({"key": "session_id", "match": {"value": req.session_id}})
-    if not must_conditions:
-        # Ensure some inclusion filter to avoid empty filter bug in Qdrant
-        must_conditions.append({"key": "session_id", "match": {"value": req.session_id or "default"}})
+    # If no session_id is provided, allow pulling from all sessions (no forced 'default')
 
     scroll_filter["must"] = must_conditions
     print(f"[DEBUG] Sync filter being applied:\n{json.dumps(scroll_filter, indent=2)}")
@@ -780,7 +778,7 @@ async def sync_all_peers():
                     print(f"[Memory Sync] Syncing with peer at {peer_endpoint}")
                     res = await client_async.post(
                         url,
-                        json={"peer_url": local_base_url, "limit": 10}
+                        json={"peer_url": local_base_url, "session_id": "", "tags": [], "limit": 10}
                     )
                     res.raise_for_status()
             except Exception as e:
