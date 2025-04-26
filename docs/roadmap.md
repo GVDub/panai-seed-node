@@ -10,7 +10,7 @@ This document outlines the evolving roadmap for the PanAI Seed Node project. It 
 - [x] Reflection, Summarization, Planning, and Dream modules
 - [x] Journal and Advice endpoints
 - [x] Git tracking and initial documentation layout
-- [ ] Refactor shared memory-query logic to eliminate duplication
+- [x] Refactor shared memory-query logic to eliminate duplication
 
 ## Near-Term Goals
 
@@ -18,7 +18,8 @@ This document outlines the evolving roadmap for the PanAI Seed Node project. It 
 - [ ] Establish persistent startup and watchdog behavior for system restarts
 - [ ] Move endpoint prompts to modular config files
 - [ ] Extend memory to support time-based and event-based querying
-- [ ] Begin local memory-to-memory federation (manual sync)
+- [x] Begin local memory-to-memory federation (manual sync)
+- [ ] Add support for full conversation logging (multi-turn chat sessions) via `/mesh/log_conversation` endpoint
 
 ## Mid-Term Goals
 
@@ -26,6 +27,7 @@ This document outlines the evolving roadmap for the PanAI Seed Node project. It 
 - [ ] Standardized query/response API schema across nodes
 - [ ] Shared embedding model management or version signaling
 - [ ] Memory compression/summarization for long-running sessions
+- [ ] Enable combined user/assistant embeddings per turn for richer conversational memory
 
 ## Long-Term Vision
 
@@ -34,3 +36,20 @@ This document outlines the evolving roadmap for the PanAI Seed Node project. It 
 - [ ] Modular pluggable frontends (CLI, WebUI, TUI, API gateway)
 - [ ] External connector modules (e.g., browser plugin, document indexers)
 - [ ] Eventual decentralized graph of PanAI nodes with collaborative self-regulation
+- [ ] Conversational session memory weaving and cross-session context linking
+
+---
+
+## 🥚 Easter Egg
+
+In the spirit of joyful collaboration, PanAI supports optional haiku commit messages. These are purely for delight, inspiration, and as a reminder that language and logic can dance.
+
+**Example:**
+
+```
+Shared memory blooms,  
+nodes awaken, words take wing—  
+sync across the sky.
+```
+
+Use them when the spirit strikes you.
