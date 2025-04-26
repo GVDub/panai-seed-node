@@ -79,7 +79,7 @@ async def log_chat(chat_data: dict):
             response = await client.post(
                 "http://localhost:8000/memory/log_memory",
                 json={
-                    "text": chat_data.get("text"),
+                    "text": chat_data.get("response"),
                     "session_id": chat_data.get("session_id"),
                     "tags": chat_data.get("tags", [])
                 },
