@@ -7,13 +7,13 @@
 # offering options if local changes would cause a conflict.
 
 # Stop the service before updating
-echo "🧠 Stopping panai service..."
-sudo systemctl stop panai
+echo "🧠 Stopping panai-memory service..."
+sudo systemctl stop panai-memory
 
 # Define fallback paths to search for the panai-seed-node repo
 PATHS=(
-  "$HOME/george/services/panai-seed-node"
   "$HOME/services/panai-seed-node"
+  "$HOME/george/services/panai-seed-node"
 )
 
 # Try each known repo path
@@ -26,9 +26,9 @@ for DIR in "${PATHS[@]}"; do
     GIT_OUTPUT=$(git pull --dry-run 2>&1)
     if echo "$GIT_OUTPUT" | grep -q "Already up to date."; then
       echo "✅ Repository already up to date."
-      echo "🚀 Restarting panai service..."
-      sudo systemctl start panai
-      echo "✅ Done. Use 'journalctl -u panai -f' to follow logs."
+      echo "🚀 Restarting panai-memory service..."
+      sudo systemctl start panai-memory
+      echo "✅ Done. Use 'journalctl -u panai-memory -f' to follow logs."
       exit 0
     fi
 
@@ -66,9 +66,9 @@ for DIR in "${PATHS[@]}"; do
       git pull
     fi
 
-    echo "🚀 Restarting panai service..."
-    sudo systemctl start panai
-    echo "✅ Done. Use 'journalctl -u panai -f' to follow logs."
+    echo "🚀 Restarting panai-memory service..."
+    sudo systemctl start panai-memory
+    echo "✅ Done. Use 'journalctl -u panai-memory -f' to follow logs."
     exit 0
   fi
 done
