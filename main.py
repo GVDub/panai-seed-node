@@ -16,7 +16,7 @@ import time
 from memory_api.memory_api import (
     log_memory,
     MemoryEntry,
-    router as memory_router,
+    memory_router,
     stats_router as memory_stats_router
 )
 from mesh_api.mesh_api import save_peer
