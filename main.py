@@ -144,7 +144,6 @@ async def periodic_health_check():
 
 @app.on_event("startup")
 async def startup_tasks():
-    # Register mDNS service for local discovery
     zeroconf = Zeroconf()
     hostname = socket.gethostname()
     info = ServiceInfo(
@@ -155,11 +154,8 @@ async def startup_tasks():
         properties={b"name": hostname},
         server=f"{hostname}.local."
     )
-    loop = asyncio.get_running_loop()
-    loop.run_in_executor(None, zeroconf.register_service, info)
-    print(f"[Startup] Scheduled mDNS registration for service: {hostname}.local.")
-    # zeroconf.register_service(info)
-    # print(f"[Startup] Registered mDNS service: {service_name}")
+    zeroconf.register_service(info)
+    print(f"[Startup] Registered mDNS service: {hostname}.local.")
     asyncio.create_task(preload_models())
     asyncio.create_task(periodic_health_check())
     asyncio.create_task(memory_sync_loop())
