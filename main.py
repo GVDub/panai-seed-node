@@ -81,11 +81,26 @@ def resolve_node_name(identity_json):
         return f"Seed-{socket.gethostname()}.local"
     return configured_name
 
-app = FastAPI()
 app.include_router(memory_router, prefix="/memory")
 app.include_router(memory_stats_router, prefix="/memory/stats")
 app.include_router(mesh_router, prefix="/mesh")
 # Updated for memory router sync check
+
+# --- mDNS Service Registration ---
+def register_mdns_service():
+    zeroconf = Zeroconf()
+    service_name = f"{socket.gethostname()}.local."
+    service_info = ServiceInfo(
+        "_panai-memory._tcp.local.",
+        service_name,
+        addresses=[socket.inet_aton(socket.gethostbyname(socket.gethostname()))],
+        port=8000,
+        properties={b"name": service_name.encode()},
+        server=service_name.encode(),
+    )
+    zeroconf.register_service(service_info)
+    print(f"[Startup] Registered mDNS service: {service_name}.")
+    return zeroconf
 
 async def preload_models():
     import httpx
@@ -144,18 +159,7 @@ async def periodic_health_check():
 
 @app.on_event("startup")
 async def startup_tasks():
-    zeroconf = Zeroconf()
-    hostname = socket.gethostname()
-    info = ServiceInfo(
-        SERVICE_TYPE,
-        f"{hostname}.local.",
-        addresses=[socket.inet_aton(socket.gethostbyname(hostname))],
-        port=8000,
-        properties={b"name": hostname},
-        server=f"{hostname}.local."
-    )
-    zeroconf.register_service(info)
-    print(f"[Startup] Registered mDNS service: {hostname}.local.")
+    register_mdns_service()  # Register mDNS service when the app starts
     asyncio.create_task(preload_models())
     asyncio.create_task(periodic_health_check())
     asyncio.create_task(memory_sync_loop())
