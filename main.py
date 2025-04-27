@@ -146,13 +146,14 @@ async def periodic_health_check():
 async def startup_tasks():
     # Register mDNS service for local discovery
     zeroconf = Zeroconf()
-    service_name = f"{socket.gethostname()}._panai-memory._tcp.local."
+    hostname = socket.gethostname()
     info = ServiceInfo(
         SERVICE_TYPE,
-        service_name,
-        addresses=[socket.inet_aton(socket.gethostbyname(socket.gethostname()))],
+        f"{hostname}.local.",
+        addresses=[socket.inet_aton(socket.gethostbyname(hostname))],
         port=8000,
-        properties={b"name": socket.gethostname()}
+        properties={b"name": hostname},
+        server=f"{hostname}.local."
     )
     loop = asyncio.get_running_loop()
     loop.run_in_executor(None, zeroconf.register_service, info)
