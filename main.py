@@ -84,6 +84,7 @@ app = memory_app
 app.include_router(memory_router, prefix="/memory")
 app.include_router(memory_stats_router, prefix="/memory/stats")
 app.include_router(mesh_router, prefix="/mesh")
+# Updated for memory router sync check
 
 async def preload_models():
     import httpx
