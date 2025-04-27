@@ -157,7 +157,7 @@ async def startup_tasks():
     )
     loop = asyncio.get_running_loop()
     loop.run_in_executor(None, zeroconf.register_service, info)
-    print(f"[Startup] Scheduled mDNS registration for service: {service_name}")
+    print(f"[Startup] Scheduled mDNS registration for service: {hostname}.local.")
     # zeroconf.register_service(info)
     # print(f"[Startup] Registered mDNS service: {service_name}")
     asyncio.create_task(preload_models())
