@@ -14,7 +14,6 @@ SERVICE_TYPE = "_panai-memory._tcp.local."
 import time
 
 from memory_api.memory_api import (
-    app as memory_app,
     log_memory,
     MemoryEntry,
     router as memory_router,
@@ -80,7 +79,7 @@ def resolve_node_name(identity_json):
         return f"Seed-{socket.gethostname()}.local"
     return configured_name
 
-app = memory_app
+app = FastAPI()
 app.include_router(memory_router, prefix="/memory")
 app.include_router(memory_stats_router, prefix="/memory/stats")
 app.include_router(mesh_router, prefix="/mesh")
