@@ -30,6 +30,8 @@ logging.basicConfig(
     format="%(asctime)s [%(levelname)s] %(message)s",
 )
 
+app = FastAPI()
+
 logger = logging.getLogger(__name__)
 
 async def schedule_log_cleanup():

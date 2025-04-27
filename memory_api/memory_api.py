@@ -238,16 +238,16 @@ class MemoryLog(BaseModel):
     session_id: str = "default"
     tags: List[str] = []
 
-@memory_router.post("/memory/log_memory", operation_id="log_memory")
+@memory_router.post("/log_memory", operation_id="log_memory")
 def log_memory(entry: MemoryLog):
     log_generic_memory(entry.text, entry.session_id, entry.tags)
     return {"status": "🧠 Memory logged.", "session_id": entry.session_id}
 
-@memory_router.post("/memory/store", operation_id="store_memory")
+@memory_router.post("/store", operation_id="store_memory")
 def store_memory_alias(entry: MemoryLog):
     return log_memory(entry)
 
-@memory_router.post("/memory/summarize", operation_id="summarize_session")
+@memory_router.post("/summarize", operation_id="summarize_session")
 def summarize_session(request: SummaryRequest):
     # Pull matching memories
     results = client.scroll(
@@ -283,7 +283,7 @@ class ReflectRequest(BaseModel):
     session_id: str
     limit: int = 20
 
-@memory_router.post("/memory/reflect", operation_id="reflect_on_session")
+@memory_router.post("/reflect", operation_id="reflect_on_session")
 async def reflect_on_session(request: ReflectRequest):
     prompt_template = (
         "Here is a series of memory logs from session '{session_id}':\n\n"
@@ -308,7 +308,7 @@ class AdviceRequest(BaseModel):
     session_id: str
     limit: int = 10
 
-@memory_router.post("/memory/advice", operation_id="give_advice")
+@memory_router.post("/advice", operation_id="give_advice")
 async def give_advice(request: AdviceRequest):
     prompt_template = (
         "Based on these reflections from session '{session_id}':\n\n"
@@ -333,7 +333,7 @@ class PlanRequest(BaseModel):
     session_id: str
     limit: int = 10
 
-@memory_router.post("/memory/plan", operation_id="generate_plan")
+@memory_router.post("/plan", operation_id="generate_plan")
 async def generate_plan(request: PlanRequest):
     prompt_template = (
         "Based on this advice history for session '{session_id}', "
@@ -357,7 +357,7 @@ class DreamRequest(BaseModel):
     session_id: str
     limit: int = 25
 
-@memory_router.post("/memory/dream", operation_id="dream_from_memory")
+@memory_router.post("/dream", operation_id="dream_from_memory")
 async def dream_from_memory(request: DreamRequest):
     prompt_template = (
         "Here are some memories from session '{session_id}':\n\n"
@@ -391,7 +391,7 @@ class DreamLogRequest(BaseModel):
     session_id: str = "default"
     tags: List[str] = ["dream", "meta"]
 
-@memory_router.post("/memory/log_dream", operation_id="log_dream")
+@memory_router.post("/log_dream", operation_id="log_dream")
 def log_dream(entry: DreamLogRequest):
     log_generic_memory(entry.text, entry.session_id, entry.tags)
     return {"status": "🌙 Dream logged.", "session_id": entry.session_id}
@@ -401,7 +401,7 @@ class ReflectionLogRequest(BaseModel):
     session_id: str = "default"
     tags: List[str] = ["reflection", "meta"]
 
-@memory_router.post("/memory/log_reflection", operation_id="log_reflection")
+@memory_router.post("/log_reflection", operation_id="log_reflection")
 def log_reflection(entry: ReflectionLogRequest):
     log_generic_memory(entry.text, entry.session_id, entry.tags)
     return {"status": "🔍 Reflection logged.", "session_id": entry.session_id}
@@ -411,7 +411,7 @@ class AdviceLogRequest(BaseModel):
     session_id: str = "default"
     tags: List[str] = ["advice", "meta"]
 
-@memory_router.post("/memory/log_advice", operation_id="log_advice")
+@memory_router.post("/log_advice", operation_id="log_advice")
 def log_advice(entry: AdviceLogRequest):
     log_generic_memory(entry.text, entry.session_id, entry.tags)
     return {"status": "💡 Advice logged.", "session_id": entry.session_id}
@@ -421,12 +421,12 @@ class PlanLogRequest(BaseModel):
     session_id: str = "default"
     tags: List[str] = ["plan", "meta"]
 
-@memory_router.post("/memory/log_plan", operation_id="log_plan")
+@memory_router.post("/log_plan", operation_id="log_plan")
 def log_plan(entry: PlanLogRequest):
     log_generic_memory(entry.text, entry.session_id, entry.tags)
     return {"status": "🧭 Plan logged.", "session_id": entry.session_id}
 
-@memory_router.post("/memory/next", operation_id="generate_next_step")
+@memory_router.post("/next", operation_id="generate_next_step")
 async def next_step(request: PlanRequest):
     prompt_template = (
         "Here’s recent advice from session '{session_id}':\n\n"
@@ -459,7 +459,7 @@ class JournalRequest(BaseModel):
     session_id: str
     entry: str
 
-@memory_router.post("/memory/journal", operation_id="log_journal_entry")
+@memory_router.post("/journal", operation_id="log_journal_entry")
 def log_journal_entry(request: JournalRequest):
     log_generic_memory(request.entry, request.session_id, ["journal", "meta"])
     return {
@@ -473,7 +473,7 @@ class SyncRequest(BaseModel):
     session_id: str | None = None
     limit: int = 10
 
-@memory_router.post("/memory/sync_with_peer", operation_id="sync_with_peer")
+@memory_router.post("/sync_with_peer", operation_id="sync_with_peer")
 async def sync_with_peer(req: SyncRequest):
     # Prevent self-syncing based on peer_url
     local_hostnames = {socket.gethostname(), socket.getfqdn(), "localhost"}
