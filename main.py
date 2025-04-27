@@ -96,7 +96,7 @@ def register_mdns_service():
         addresses=[socket.inet_aton(socket.gethostbyname(socket.gethostname()))],
         port=8000,
         properties={b"name": service_name.encode()},
-        server=service_name.encode(),
+        server=service_name,
     )
     zeroconf.register_service(service_info)
     print(f"[Startup] Registered mDNS service: {service_name}.")
