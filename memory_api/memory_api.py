@@ -473,7 +473,7 @@ class SyncRequest(BaseModel):
     session_id: str | None = None
     limit: int = 10
 
-@memory_router.post("/memory/sync_with_peer", operation_id="sync_with_peer")
+@memory_router.post("/sync_with_peer", operation_id="sync_with_peer")
 async def sync_with_peer(req: SyncRequest):
     # Prevent self-syncing based on peer_url
     local_hostnames = {socket.gethostname(), socket.getfqdn(), "localhost"}
