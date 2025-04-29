@@ -1,5 +1,3 @@
-
-
  # PanAI Seed Node Architecture
  
  ## Overview
@@ -15,16 +13,19 @@
  - Logging user/system-generated memory entries
  - Performing reflection, summarization, and advice generation
  - Embedding and storing vectors in a local Qdrant instance
+ - Upcoming modularization to separate CRUD, Search, Reflection, and related functionalities
  
  ### 🔄 Chat and Inference Services
  - Dynamic model selection based on task type
  - Lightweight inference endpoints for multi-modal or multi-model reasoning
  - Designed to plug into Ollama or local llama.cpp infrastructure
+ - Supports dynamic model discovery (e.g., Ollama polling) and upcoming heterogeneous model federation
  
  ### 🔗 Node Mesh
  - Each PanAI instance can query others on the LAN via REST API
  - Supports future peer validation and routing strategies
  - Node registry (`nodes.json`) stores peer metadata and health info
+ - Nodes now advertise available models during sync
  
  ---
  
@@ -68,6 +69,7 @@
  - Optional ZK-proofs or pseudonymous keys for log commitments
  - Dedicated Anchor Microservice for real-time Merkle tracking
  - CLI tools to recompute and verify historic checkpoints
+ - Dynamic model capability federation
  
  ---
  

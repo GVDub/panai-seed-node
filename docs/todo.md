@@ -20,9 +20,11 @@
   - Identify and suppress automatic analysis of reflection-tagged logs
   - Filter out re-analysis of logs already tagged as summaries
 
-- [ ] **Add Logging Controls**
-  - Optional log level (`debug`, `info`, etc.)
+- [x] **Add Logging Controls**
+  - Optional log level (`debug`, `info`, etc.) Fully complete
   - Option to silence low-priority logs or tag them as ephemeral
+
+- [ ] **Standardize Logging Across Modules** – In progress (model_manager.py complete; memory_api.py next)
 
 ---
 
@@ -63,4 +65,3 @@
 - [x] **Remove unused imports (`hashlib`, etc.)**
 - [ ] **Add `.env.example` with all keys**
 - [ ] **Add contributor-style doc section on how to run local multi-node mesh**
-
