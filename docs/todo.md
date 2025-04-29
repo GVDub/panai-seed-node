@@ -46,6 +46,11 @@
   - Add batch size config for memory export to JSONL
   - Monitor RAM usage and adjust defaults for low-RAM nodes
 
+- [ ] **Migrate to AsyncZeroconf**
+  - Replace Zeroconf with AsyncZeroconf for service registration
+  - Update startup/shutdown flows to await async unregister
+  - Eliminate blocking I/O warning on shutdown
+
 ---
 
 ## 📦 Open WebUI Integration
