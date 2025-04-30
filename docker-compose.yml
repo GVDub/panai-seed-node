@@ -26,7 +26,6 @@ services:
       - open-webui-data:/app/backend/data
     environment:
       - OLLAMA_API_BASE_URL=${OLLAMA_BASE_URL}
-      - OLLAMA_BASE_URL=http://host.docker.internal:11434
       - WEBUI_SECRET_KEY=changeme
     restart: unless-stopped
     extra_hosts:
