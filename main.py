@@ -163,7 +163,10 @@ async def periodic_health_check():
 
 @app.on_event("startup")
 async def startup_tasks():
-    ensure_panai_memory_collection()
+    try:
+        ensure_panai_memory_collection()
+    except Exception as e:
+        logger.warning(f"[Startup] Qdrant collection check failed: {e}")
     await register_mdns_service()  # Register mDNS service when the app starts
     asyncio.create_task(preload_models())
     asyncio.create_task(periodic_health_check())
