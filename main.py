@@ -25,6 +25,8 @@ from mesh_api.mesh_api import mesh_router
 from memory_api.prune_synced_logs import prune_synced_logs
 from memory_api.qdrant_interface import ensure_panai_memory_collection
 
+from memory_api.memory_logger import log_interaction
+
 logging.basicConfig(
     filename="server.log",
     level=logging.INFO,
@@ -188,39 +190,6 @@ class ChatResponse(BaseModel):
     model: str
     timestamp: str
 
-# --- Logging ---
-def log_interaction(prompt, response, tags):
-    if not access.get("log_interactions", False):
-        return
-
-    timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-    log_entry = f"""### [{timestamp}]
-
-**User:** {prompt}
-
-**Model ({model_name}):**  
-{response}
-
-**Tags:** {" ".join(f"#{tag}" for tag in tags)}
-
----
-"""
-    log_file = f"audit_log/{datetime.now().strftime('%Y-%m-%d')}.md"
-    with open(log_file, "a") as f:
-        f.write(log_entry)
-    
-    # Also log to memory system
-    try:
-        memory_entry = MemoryEntry(
-            text=f"**Prompt:** {prompt}\n\n**Response:** {response}",
-            session_id=f"chat-{datetime.now().strftime('%Y%m%d-%H%M%S')}",
-            tags=tags + ["chat", "shared"]
-        )
-        import asyncio
-        asyncio.create_task(log_memory(memory_entry))
-    except Exception as e:
-        logger.warning(f"[Audit] Failed to log memory from chat: {e}")
-
 # --- Chat Endpoint ---
 @app.post("/chat", response_model=ChatResponse, operation_id="chat_with_model")
 async def chat(req: ChatRequest):
@@ -236,7 +205,7 @@ async def chat(req: ChatRequest):
     except Exception as e:
         content = f"Error contacting model '{model_name}': {e}"
 
-    log_interaction(req.prompt, content, req.tags)
+    log_interaction(req.prompt, content, req.tags, access, model_name)
 
     return ChatResponse(
         response=content,
