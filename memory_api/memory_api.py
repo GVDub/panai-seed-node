@@ -24,8 +24,7 @@ import json
 #third-party imports
 from fastapi import FastAPI, APIRouter, Request
 from pydantic import BaseModel
-from qdrant_client import QdrantClient
-from sentence_transformers import SentenceTransformer
+from memory_api.qdrant_interface import client
 import socket
 
 # Zeroconf/mDNS imports for LAN peer discovery
@@ -44,25 +43,9 @@ if not os.path.exists("memory_log.json"):
     with open("memory_log.json", "w") as f:
         json.dump([], f)
 
-client = QdrantClient(host="localhost", port=6333)
 
-# Load all-mpnet-base-v2 model for embedding (768-dimension)
-embed_model = SentenceTransformer("sentence-transformers/all-mpnet-base-v2")
-
-
-
-
-def embed_text(text: str) -> list:
-    try:
-        vector = embed_model.encode(text, normalize_embeddings=True).tolist()
-        if not vector or len(vector) != 768:
-            print(f"[Embedding ERROR] Invalid vector — len={len(vector) if vector else 'None'} — text='{text[:50]}'")
-        else:
-            print(f"[Embedding OK] Vector len={len(vector)} for text: '{text[:50]}'")
-        return vector
-    except Exception as e:
-        print(f"[Embedding EXCEPTION] Failed to embed: {text[:50]} — {e}")
-        return None
+# Local embedding utility import
+from memory_api.embedding import embed_text
 
 # --- Begin get_local_identity function ---
 def get_local_identity():

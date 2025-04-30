@@ -23,6 +23,7 @@ from mesh_api.mesh_api import save_peer
 from memory_api.memory_api import memory_sync_loop
 from mesh_api.mesh_api import mesh_router
 from memory_api.prune_synced_logs import prune_synced_logs
+from memory_api.qdrant_interface import ensure_panai_memory_collection
 
 logging.basicConfig(
     filename="server.log",
@@ -162,6 +163,7 @@ async def periodic_health_check():
 
 @app.on_event("startup")
 async def startup_tasks():
+    ensure_panai_memory_collection()
     await register_mdns_service()  # Register mDNS service when the app starts
     asyncio.create_task(preload_models())
     asyncio.create_task(periodic_health_check())
