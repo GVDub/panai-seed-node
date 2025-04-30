@@ -36,37 +36,42 @@ Pan-AI nodes are designed for:
 
 ## 🚀 Quickstart
 
-### 1. Install Ollama + your model
+### 1. Install Ollama and run your model (Mac/Linux)
+
 ```bash
-brew install ollama
-ollama run llama3.2:latest
+brew install ollama         # or follow https://ollama.com/download
+ollama run llama3:instruct  # or another supported model
 ```
 
-### 2. Clone this repo and set up a Python virtual environment
+### 2. Clone and configure the Pan-AI Seed Node
 
-``` bash
+```bash
 git clone https://github.com/GVDub/panai-seed-node.git
 cd panai-seed-node
-python3 -m venv venv
-source venv/bin/activate
-pip install -r requirements.txt
+cp .env.example .env       # Review and edit values as needed
 ```
 
-### 3. Start your seed node
+> 💡 If you're not using Docker, skip to manual install in [`docs/deployment.md`](docs/deployment.md)
+
+### 3. Launch via Docker Compose
+
 ```bash
-uvicorn main:app –reload
+docker compose up -d
 ```
 
-### 4. Test it
-```bash
-curl -X POST http://localhost:8000/chat 
--H "Content-Type: application/json" 
--d '{"prompt": "What is the role of cultural memory in decentralized AI?", "tags": ["seed", "memory"]}'
-```
+This will start:
+- 🧠 Open WebUI for chat (`http://localhost:3000`)
+- 📦 Qdrant vector database (for memory)
+- 🪪 FastAPI-based seed node (`http://localhost:8000/docs`)
+
+### 4. Explore the API
+
+- Visit: [http://localhost:8000/docs](http://localhost:8000/docs) for Swagger UI
+- Or use the WebUI at [http://localhost:3000](http://localhost:3000) for natural chat
 ---
 
 ## 📁 Project Structure
-panai-seed-node/
+./
 ├── panai.identity.json   # Who this node is and what it values
 ├── panai.memory.json     # What this node remembers
 ├── panai.access.json     # Access + logging policy
@@ -109,16 +114,15 @@ The Pan-AI Seed Node is designed as a modular, extensible framework for local AI
 
 **Core Components:**
 
-- **`main.py`** – Serves as the API gateway, providing a `/chat` endpoint with audit logging and configurable identity/personality.
-- **`memory/` module** – Optional memory cortex that enables:
-  - Vector storage via Qdrant
-  - Embedding generation (via `sentence-transformers`)
-  - Insight functions like `/reflect`, `/plan`, `/advice`, and `/dream`
-- **JSON Manifests** – Simple, editable configuration files that define:
-  - Node identity and values (`panai.identity.json`)
-  - Memory policy (`panai.memory.json`)
-  - Access and logging rules (`panai.access.json`)
-- **Durable Journals** – All interactions are logged to Markdown for review and continuity.
+- **`main.py`** – Serves as the API gateway and orchestrator, exposing routes and initializing key services.
+- **`memory_api/`** – Modular memory subsystem enabling:
+  - Vector storage (via Qdrant)
+  - Embedding and summarization logic
+  - Insight endpoints: `/summarize`, `/reflect`, `/advice`, `/dream`, etc.
+- **`mesh_api/`** – Handles peer discovery, federation sync, and LAN-aware exchange between trusted nodes.
+- **`model_manager/`** – Centralizes model info, validation, and active model tracking.
+- **`JSON manifests`** – Define node identity (`panai.identity.json`), memory policy (`panai.memory.json`), and access/logging rules (`panai.access.json`)
+- **Durable Journals** – All conversations are saved as markdown files in `audit_log/`, preserving context across sessions.
 
 **Federation Goals:**
 

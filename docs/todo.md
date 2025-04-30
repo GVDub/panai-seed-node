@@ -24,7 +24,7 @@
   - Optional log level (`debug`, `info`, etc.) Fully complete
   - Option to silence low-priority logs or tag them as ephemeral
 
-- [ ] **Standardize Logging Across Modules** – In progress (model_manager.py complete; memory_api.py next)
+- [x] **Standardize Logging Across Modules** – Complete for model_manager.py, memory_api.py, and mesh_api.py
 
 ---
 
@@ -68,5 +68,6 @@
 ## 📎 Cleanup & Refactoring
 
 - [x] **Remove unused imports (`hashlib`, etc.)**
-- [ ] **Add `.env.example` with all keys**
+- [x] **Add `.env.example` with all keys**
 - [ ] **Add contributor-style doc section on how to run local multi-node mesh**
+- [x] Modularized memory_api and mesh_api into dedicated components (embedding, logging, config, peer registry, routes, utils)
