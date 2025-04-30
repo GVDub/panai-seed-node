@@ -162,7 +162,7 @@ async def periodic_health_check():
 
 @app.on_event("startup")
 async def startup_tasks():
-    register_mdns_service()  # Register mDNS service when the app starts
+    await register_mdns_service()  # Register mDNS service when the app starts
     asyncio.create_task(preload_models())
     asyncio.create_task(periodic_health_check())
     asyncio.create_task(memory_sync_loop())
