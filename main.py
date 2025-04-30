@@ -12,6 +12,7 @@ import socket
 from zeroconf import Zeroconf, ServiceInfo
 SERVICE_TYPE = "_panai-memory._tcp.local."
 import time
+from memory_api.config_loader import load_config
 
 from memory_api.memory_api import (
     log_memory,
@@ -51,10 +52,7 @@ async def schedule_log_cleanup():
 
 start_time = time.time()
 
-# --- Config Loader ---
-def load_config(file_name):
-    with open(file_name, "r") as f:
-        return json.load(f)
+
 
 identity = load_config("panai.identity.json")
 memory = load_config("panai.memory.json")
