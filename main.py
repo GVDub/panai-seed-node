@@ -20,9 +20,9 @@ from memory_api.memory_api import (
     memory_router,
     stats_router as memory_stats_router
 )
-from mesh_api.mesh_api import save_peer
+from mesh_api.peer_registry import save_peer
 from memory_api.memory_api import memory_sync_loop
-from mesh_api.mesh_api import mesh_router
+from mesh_api.mesh_routes import mesh_routes as mesh_router
 from memory_api.log_pruner import prune_synced_logs
 from memory_api.qdrant_interface import ensure_panai_memory_collection
 
