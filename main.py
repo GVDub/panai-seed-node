@@ -23,7 +23,7 @@ from memory_api.memory_api import (
 from mesh_api.mesh_api import save_peer
 from memory_api.memory_api import memory_sync_loop
 from mesh_api.mesh_api import mesh_router
-from memory_api.prune_synced_logs import prune_synced_logs
+from memory_api.log_pruner import prune_synced_logs
 from memory_api.qdrant_interface import ensure_panai_memory_collection
 
 from memory_api.memory_logger import log_interaction
@@ -43,7 +43,7 @@ async def schedule_log_cleanup():
     while True:
         try:
             import aiofiles
-            from memory_api.prune_synced_logs import async_prune_synced_logs
+            from memory_api/log_pruner import async_prune_synced_logs
             await async_prune_synced_logs("memory_log.json", "cleaned_log.json", days_threshold=30)
             logger.info("[Log Cleanup] Completed scheduled memory log pruning.")
         except Exception as e:
