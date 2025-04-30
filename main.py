@@ -43,7 +43,7 @@ async def schedule_log_cleanup():
     while True:
         try:
             import aiofiles
-            from memory_api/log_pruner import async_prune_synced_logs
+            from memory_api.log_pruner import async_prune_synced_logs
             await async_prune_synced_logs("memory_log.json", "cleaned_log.json", days_threshold=30)
             logger.info("[Log Cleanup] Completed scheduled memory log pruning.")
         except Exception as e:
