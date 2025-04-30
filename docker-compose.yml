@@ -28,6 +28,8 @@ services:
       - OLLAMA_API_BASE_URL=${OLLAMA_BASE_URL}
       - WEBUI_SECRET_KEY=changeme
     restart: unless-stopped
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
 
   watchtower:
     image: containrrr/watchtower
