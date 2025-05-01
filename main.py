@@ -6,6 +6,7 @@ import asyncio
 import httpx
 import json
 import logging
+from memory_api.memory_logger import log_ops_event, log_shutdown_event
 import os
 import requests
 import socket
@@ -46,8 +47,10 @@ async def schedule_log_cleanup():
             from memory_api.log_pruner import async_prune_synced_logs
             await async_prune_synced_logs("memory_log.json", "cleaned_log.json", days_threshold=30)
             logger.info("[Log Cleanup] Completed scheduled memory log pruning.")
+            log_ops_event("[Log Cleanup] Completed scheduled memory log pruning.")
         except Exception as e:
             logger.error(f"[Log Cleanup] Error during log pruning: {e}")
+            log_ops_event(f"[Log Cleanup] Error during log pruning: {e}")
         await asyncio.sleep(259200)  # Every 3 days (in seconds)
 
 start_time = time.time()
@@ -65,6 +68,7 @@ def load_known_peers():
         nodes_list = data.get("nodes", [])
         if not isinstance(nodes_list, list):
             print("[Main] Malformed nodes.json: expected a list under 'nodes'.")
+            log_ops_event("[Main] Malformed nodes.json: expected a list under 'nodes'.")
             return []
         return nodes_list
     except FileNotFoundError:
@@ -79,7 +83,9 @@ ollama_url = access.get("ollama_url", "http://localhost:11434/api/chat")
 def resolve_node_name(identity_json):
     configured_name = identity_json.get("node_name")
     if configured_name in [None, "", "auto"]:
-        return f"Seed-{socket.gethostname()}.local"
+        resolved_name = f"Seed-{socket.gethostname()}.local"
+        log_ops_event(f"Node name auto-resolved to {resolved_name}")
+        return resolved_name
     return configured_name
 
 app.include_router(memory_router, prefix="/memory")
@@ -102,9 +108,11 @@ async def register_mdns_service():
         )
         zeroconf.register_service(service_info)
         print(f"[Startup] Registered mDNS service: {service_name}.")
+        log_ops_event(f"Registered mDNS service: {service_name}")
         return zeroconf
     except Exception as e:
         logger.error(f"[Startup] Error registering mDNS service: {e}")
+        log_ops_event(f"[Startup] Error registering mDNS service: {e}")
 
 async def preload_models():
     import httpx
@@ -118,8 +126,10 @@ async def preload_models():
                 response = await client.post("http://localhost:11434/api/generate", json=p)
                 response.raise_for_status()
                 logger.info(f"[Startup] Model {p['model']} warmed up.")
+                log_ops_event(f"Model {p['model']} warmed up during startup.")
             except httpx.HTTPError as e:
                 logger.error(f"[Startup] Warmup failed for {p['model']}: {e}")
+                log_ops_event(f"[Startup] Warmup failed for {p['model']}: {e}")
 
 async def periodic_health_check():
     await asyncio.sleep(10)  # Give server a moment to fully start
@@ -129,6 +139,7 @@ async def periodic_health_check():
         for peer in peers:
             if not isinstance(peer, dict):
                 logger.warning(f"[Health Check] Skipping malformed peer entry: {peer}")
+                log_ops_event(f"[Health Check] Skipping malformed peer entry: {peer}")
                 continue
             url = peer.get("url") or f"http://{peer.get('hostname')}:8000"
             logger.debug(f"[Health Check] Using URL: {url} for peer: {peer.get('hostname')}")
@@ -147,17 +158,21 @@ async def periodic_health_check():
             except Exception:
                 peer["status"] = "unreachable"
                 logger.warning(f"[Health Check] Peer unreachable: {peer.get('hostname', 'unknown')} ({url})")
+                log_ops_event(f"[Health Check] Peer unreachable: {peer.get('hostname', 'unknown')} ({url})")
                 logger.info(f"[Health Check] {peer.get('hostname', 'unknown')} status: {peer['status']}")
         if updated:
             with open("nodes.json", "w") as f:
                 json.dump({"version": "1.0", "nodes": peers}, f, indent=2)
+            log_ops_event("[Health Check] Updated nodes.json with latest peer statuses.")
         peer_statuses = ", ".join(
             f"{p.get('hostname', 'unknown')}: {p.get('status', 'unknown')}"
             for p in peers
             if isinstance(p, dict)
         )
         logger.info(f"[Health Check] Peer statuses: {peer_statuses}")
+        log_ops_event(f"[Health Check] Peer statuses: {peer_statuses}")
         logger.info("[Health Check] Completed round of peer health checks.")
+        log_ops_event("[Health Check] Completed round of peer health checks.")
         await asyncio.sleep(900)  # 15 minutes
 
 
@@ -165,14 +180,20 @@ async def periodic_health_check():
 async def startup_tasks():
     try:
         ensure_panai_memory_collection()
+        log_ops_event("Qdrant collection ensured.")
     except Exception as e:
         logger.warning(f"[Startup] Qdrant collection check failed: {e}")
+        log_ops_event(f"[Startup] Qdrant collection check failed: {e}")
+    log_ops_event("Ensured Qdrant collection at startup")
+    log_ops_event("Registering mDNS service")
     await register_mdns_service()  # Register mDNS service when the app starts
     asyncio.create_task(preload_models())
     asyncio.create_task(periodic_health_check())
     asyncio.create_task(memory_sync_loop())
     asyncio.create_task(schedule_log_cleanup())
+    log_ops_event("Startup tasks complete and background tasks launched.")
     logger.info("[Startup] All background tasks launched. Monitoring peers and memory sync.")
+    log_ops_event("All startup background tasks successfully launched")
 
 # Make sure audit log folder exists
 os.makedirs("audit_log", exist_ok=True)
@@ -202,6 +223,7 @@ async def chat(req: ChatRequest):
         content = r.json()["response"]
     except Exception as e:
         content = f"Error contacting model '{model_name}': {e}"
+        log_ops_event(f"Error contacting model '{model_name}': {e}")
 
     log_interaction(req.prompt, content, req.tags, access, model_name)
 
@@ -222,6 +244,7 @@ async def health_check():
     except Exception as e:
         memory_ok = False
         logger.error(f"[Health Check] Qdrant memory check failed: {e}")
+        log_ops_event(f"[Health Check] Qdrant memory check failed: {e}")
 
     return {
         "status": "ok",
@@ -261,6 +284,7 @@ async def ping_node(req: NodePingRequest):
         if not any(p["url"] == peer_entry["url"] for p in known_peers):
             known_peers.append(peer_entry)
             save_peer(peer_entry)
+            log_ops_event(f"New peer added: {peer_entry['url']}")
 
         return {
             "reachable": True,
@@ -268,6 +292,7 @@ async def ping_node(req: NodePingRequest):
             "response": peer_info
         }
     except Exception as e:
+        log_ops_event(f"Failed to ping node at {req.target_url}: {e}")
         return JSONResponse(
             status_code=503,
             content={
@@ -293,6 +318,15 @@ async def store_alias(req: MemoryEntry):
 @app.post("/trigger_manual_memory_sync", operation_id="manual_memory_sync")
 async def trigger_manual_memory_sync():
     await memory_sync_loop()
+    log_ops_event("Manual memory sync triggered via API")
     return {"status": "Manual memory sync triggered"}
 
 logger.info(f"[Startup] {resolve_node_name(identity)} is now live and ready.")
+log_ops_event(f"{resolve_node_name(identity)} startup complete.")
+
+
+# --- Shutdown Event Handler ---
+@app.on_event("shutdown")
+async def shutdown_event():
+    log_shutdown_event("Application shutdown complete.")
+    log_ops_event("Application shutdown complete.")

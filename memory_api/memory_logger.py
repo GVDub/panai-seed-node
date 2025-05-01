@@ -1,10 +1,33 @@
 import os
 from datetime import datetime
-from memory_api.memory_api import MemoryEntry, log_memory as async_log_memory
 import logging
+from logging.handlers import RotatingFileHandler
 import asyncio
 
+
+LOG_DIR = "logs"
+os.makedirs(LOG_DIR, exist_ok=True)
+
 logger = logging.getLogger(__name__)
+logger.setLevel(logging.DEBUG)
+
+formatter = logging.Formatter(
+    "%(asctime)s [%(levelname)s] %(name)s - %(message)s", datefmt="%Y-%m-%d %H:%M:%S"
+)
+
+# Console handler
+console_handler = logging.StreamHandler()
+console_handler.setLevel(logging.INFO)
+console_handler.setFormatter(formatter)
+logger.addHandler(console_handler)
+
+# File handler for WARNING and above
+error_handler = RotatingFileHandler(
+    os.path.join(LOG_DIR, "panai-error.log"), maxBytes=2_000_000, backupCount=3
+)
+error_handler.setLevel(logging.WARNING)
+error_handler.setFormatter(formatter)
+logger.addHandler(error_handler)
 
 def log_interaction(prompt, response, tags, access, model_name):
     if not access.get("log_interactions", False):
@@ -27,15 +50,14 @@ def log_interaction(prompt, response, tags, access, model_name):
     with open(log_file, "a") as f:
         f.write(log_entry)
 
-    # Also log to memory system
-    try:
-        memory_entry = MemoryEntry(
-            text=f"**Prompt:** {prompt}\n\n**Response:** {response}",
-            session_id=f"chat-{datetime.now().strftime('%Y%m%d-%H%M%S')}",
-            tags=tags + ["chat", "shared"]
-        )
-        asyncio.create_task(async_log_memory(memory_entry))
-    except Exception as e:
-        logger.warning(f"[Audit] Failed to log memory from chat: {e}")
+def log_ops_event(message: str, level: str = "INFO"):
+    log_path = os.path.join(LOG_DIR, "panai-ops.log")
+    timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+    entry = f"{timestamp} [{level.upper()}] {message}\n"
+    with open(log_path, "a") as log_file:
+        log_file.write(entry)
 
-__all__ = ["log_interaction"]
+def log_shutdown_event(message: str = "Shutdown initiated"):
+    log_ops_event(message)
+
+__all__ = ["log_interaction", "logger", "log_ops_event", "log_shutdown_event"]

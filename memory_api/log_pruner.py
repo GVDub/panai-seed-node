@@ -1,6 +1,9 @@
+import os
+import logging
 import json
 import argparse
 from datetime import datetime, timedelta
+from memory_api.memory_logger import logger
 
 
 # Replace with actual embedding module import
@@ -33,7 +36,7 @@ def load_memory_log(file_path):
         try:
             entries.append(json.loads(line))
         except json.JSONDecodeError as e:
-            print(f"[PruneLogs] Skipping malformed JSON line: {e}")
+            logger.warning(f"[PruneLogs] Skipping malformed JSON line: {e}")
     return entries
 
 def deduplicate_entries(entries):
@@ -77,10 +80,11 @@ def write_cleaned_log(entries, output_path, batch_size=1000, verbose=False):
         total_written += len(batch)
         mode = 'a'
         if verbose:
-            print(f"Wrote batch {i//batch_size + 1} with {len(batch)} entries to {output_path}")
+            logger.info(f"Wrote batch {i//batch_size + 1} with {len(batch)} entries to {output_path}")
     return total_written
 
 def main():
+    logger.info("Starting log pruning process")
     parser = argparse.ArgumentParser(description="Prune and deduplicate memory logs.")
     parser.add_argument("input", help="Path to input memory log file")
     parser.add_argument("output", help="Path to output cleaned log file")
@@ -92,29 +96,29 @@ def main():
 
     entries = load_memory_log(args.input)
     if args.verbose:
-        print(f"Loaded {len(entries)} entries.")
+        logger.info(f"Loaded {len(entries)} entries.")
 
     entries_before = len(entries)
     entries = deduplicate_entries(entries)
     if args.verbose:
-        print(f"Deduplicated entries: removed {entries_before - len(entries)} entries, {len(entries)} remain.")
+        logger.info(f"Deduplicated entries: removed {entries_before - len(entries)} entries, {len(entries)} remain.")
 
     entries_before = len(entries)
     entries = prune_old_entries(entries, days_threshold=args.days)
     if args.verbose:
-        print(f"Pruned old entries: removed {entries_before - len(entries)} entries, {len(entries)} remain.")
+        logger.info(f"Pruned old entries: removed {entries_before - len(entries)} entries, {len(entries)} remain.")
 
     if args.reembed:
         # from your_embedding_module import embed_function
         entries_before = len(entries)
         entries = reembed_non_vector_entries(entries, embed_function, verbose=args.verbose)
         if args.verbose:
-            print("Re-embedded entries without vectors.")
+            logger.info("Re-embedded entries without vectors.")
 
     entries_before = len(entries)
     entries, removed = remove_entries_without_vectors(entries)
     if args.verbose:
-        print(f"Removed {removed} entries without vectors, {len(entries)} remain.")
+        logger.info(f"Removed {removed} entries without vectors, {len(entries)} remain.")
 
     total_entries = len(entries)
     batches = (total_entries + args.batch_size - 1) // args.batch_size
@@ -129,33 +133,33 @@ def main():
                 json.dump(entry, f)
                 f.write('\n')
         if args.verbose:
-            print(f"Processed batch {batch_idx + 1}/{batches} with {len(batch_entries)} entries.")
+            logger.info(f"Processed batch {batch_idx + 1}/{batches} with {len(batch_entries)} entries.")
 
-    print(f"Processed {batches} batches. Total entries written: {total_entries}")
+    logger.info(f"Log pruning completed. {total_entries} total entries written.")
 
 def prune_synced_logs(input_path, output_path, days_threshold=30):
     try:
         entries = load_memory_log(input_path)
-        print(f"Loaded {len(entries)} entries.")
+        logger.info(f"Loaded {len(entries)} entries.")
     except Exception as e:
-        print(f"[ERROR] Failed to load memory log: {e}")
+        logger.error(f"Failed to load memory log: {e}")
         return
 
     try:
         entries = [e for e in entries if isinstance(e, dict)]
         entries = deduplicate_entries(entries)
-        print(f"{len(entries)} entries after deduplication.")
+        logger.info(f"{len(entries)} entries after deduplication.")
 
         entries = prune_old_entries(entries, days_threshold=days_threshold)
-        print(f"{len(entries)} entries after pruning old data.")
+        logger.info(f"{len(entries)} entries after pruning old data.")
 
         entries, removed = remove_entries_without_vectors(entries)
-        print(f"{len(entries)} entries remain after removing {removed} entries without vectors.")
+        logger.info(f"{len(entries)} entries remain after removing {removed} entries without vectors.")
 
         total_written = write_cleaned_log(entries, output_path)
-        print(f"Cleaned log written to {output_path} with {total_written} entries.")
+        logger.info(f"Cleaned log written to {output_path} with {total_written} entries.")
     except Exception as e:
-        print(f"[ERROR] Failed during pruning process: {e}")
+        logger.error(f"Failed during pruning process: {e}")
 
 
 # Function to re-embed entries without vectors
@@ -169,13 +173,13 @@ def reembed_non_vector_entries(entries, embed_function, verbose=False):
                 entry["vector"] = embedded_vector
                 reembedded_count += 1
                 if verbose:
-                    print(f"Re-embedded entry: {entry.get('text')[:60]}...")
+                    logger.debug(f"Re-embedded entry: {entry.get('text')[:60]}...")
             except Exception as e:
                 if verbose:
-                    print(f"Failed to embed entry: {entry.get('text')[:60]}... Error: {e}")
+                    logger.debug(f"Failed to embed entry: {entry.get('text')[:60]}... Error: {e}")
         updated_entries.append(entry)
     if verbose:
-        print(f"Re-embedded {reembedded_count} entries without vectors.")
+        logger.info(f"Re-embedded {reembedded_count} entries without vectors.")
     return updated_entries
 
 # Async stub for future compatibility

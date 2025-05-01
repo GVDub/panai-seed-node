@@ -1,3 +1,5 @@
+# Centralized logger import
+from memory_api.memory_logger import logger
 # Utility: Normalize peer URL for consistent identity checks
 def normalize_peer_url(url: str) -> str:
     try:
@@ -10,7 +12,7 @@ def normalize_peer_url(url: str) -> str:
         ip = socket.gethostbyname(host)
         return f"{scheme}://{ip}:{port[0] if port else '8000'}"
     except Exception as e:
-        print(f"[WARN] Could not normalize peer URL '{url}': {e}")
+        logger.warning(f"Could not normalize peer URL '{url}': {e}")
         return url  # fallback to original
 # Standard library imports
 from typing import List
@@ -61,10 +63,10 @@ def get_local_identity():
 
 def log_generic_memory(text: str, session_id: str, tags: List[str]):
     if not text.strip():
-        print(f"[Validation] Skipping memory with empty text.")
+        logger.info("Skipping memory with empty text.")
         return None
     if not session_id.strip():
-        print(f"[Validation] Skipping memory with empty session_id.")
+        logger.info("Skipping memory with empty session_id.")
         return None
     # Deduplication check before embedding
     existing = client.scroll(
@@ -79,7 +81,7 @@ def log_generic_memory(text: str, session_id: str, tags: List[str]):
     )
 
     if existing and existing[0]:
-        print(f"[Deduplication] Skipping duplicate memory: {text[:50]}...")
+        logger.debug(f"Skipping duplicate memory: {text[:50]}...")
         return None
 
     vector = embed_text(text)
@@ -104,14 +106,14 @@ def log_generic_memory(text: str, session_id: str, tags: List[str]):
                 if not isinstance(log, list):
                     raise ValueError("memory_log.json does not contain a list.")
             except (json.JSONDecodeError, ValueError) as e:
-                print(f"[Warning] memory_log.json parse error: {e}. Reinitializing log.")
+                logger.warning(f"memory_log.json parse error: {e}. Reinitializing log.")
                 log = []
             log.append(point["payload"])
             f.seek(0)
             json.dump(log, f, indent=2)
             f.truncate()
     except Exception as e:
-        print(f"[Warning] Could not write to memory_log.json: {e}")
+        logger.warning(f"Could not write to memory_log.json: {e}")
     return point["id"]
 
 def query_and_generate(session_id: str, tags: List[str], prompt_template: str, model: str = "mistral-nemo", limit: int = 25) -> str:
@@ -158,7 +160,7 @@ async def query_and_generate_async(session_id: str, tags: List[str], prompt_temp
             response.raise_for_status()
             return response.json()["response"]
         except httpx.HTTPError as e:
-            print(f"[ERROR] HTTP error during LLM call: {e}")
+            logger.error(f"HTTP error during LLM call: {e}")
             return f"❌ Error from language model: {e}"
 
 class MemoryEntry(BaseModel):
