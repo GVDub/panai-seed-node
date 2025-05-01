@@ -33,9 +33,9 @@ Adjust ports, model paths, or API keys as needed for your local setup.
 Create and activate a virtual environment, then install requirements:
 
 ```bash
-cd memory
+cd panai-memory
 python -m venv venv
-source venv/bin/activate
+source panai-memory/bin/activate
 pip install -r requirements.txt
 ```
 
@@ -49,14 +49,16 @@ docker compose up -d
 
 Ensure volumes are properly bound to your desired storage directories (see `docker-compose.yml`).
 
+**Note:** The `.env` variables are now used to configure Open WebUI and should be reviewed carefully, especially if deploying across different operating system environments.
+
 ### 5. Run the Memory API Server
 
 In a separate terminal:
 
 ```bash
-cd memory
-source venv/bin/activate
-uvicorn memory_api:app --host 0.0.0.0 --port 8000
+cd panai-memory
+source panai-memory/bin/activate
+uvicorn main:app --host 0.0.0.0 --port 8000
 ```
 
 ## Optional: Federated Deployment
@@ -76,3 +78,4 @@ Ensure your data volumes (Qdrant, memory logs, reflections) are mapped to persis
 - Configure API access controls (see `security.md`)
 - Explore the memory subsystem’s capabilities via Swagger UI
 - Add journaling, reflection, and planning extensions to expand contextual awareness
+- Familiarize yourself with the modular code structure introduced in version 0.3.0+ (see development.md)

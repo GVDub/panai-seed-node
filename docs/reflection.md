@@ -33,8 +33,9 @@ Reflection is designed to simulate metacognitive behavior—thinking about think
 The system performs the following steps:
 1. Retrieves recent or session-specific memories from the Qdrant vector database.
 2. Concatenates and summarizes those memories into a coherent context.
-3. Generates a reflection using a local LLM (e.g., `mistral-nemo`) via an internal prompt template.
+3. Generates a reflection using a locally hosted LLM (e.g., `mistral-nemo`, `llama3.2`, or `qwen3`) based on a purpose-built internal prompt template.
 4. Logs the generated reflection back into memory with appropriate metadata and tags.
+5. Optionally tag reflection with `meta`, `insight`, or `summary` to aid in future retrieval and prioritization.
 
 ## Use Cases
 
@@ -42,9 +43,14 @@ The system performs the following steps:
 - Identifying overlooked connections or themes
 - Supporting journaling or summarization workflows
 - Building self-awareness into AI agents
+- Generating summaries of complex conversations
+- Prompting follow-up questions or planning sessions based on observed intent
 
 ## Future Enhancements
 
 - Weighting memories by recency or semantic relevance
 - Comparing new reflections with past reflections to detect growth or change
 - Allowing custom reflection styles (e.g., analytical, philosophical, empathetic)
+- Integrating multiple model perspectives (e.g., LLM ensemble) to produce layered reflections.
+- Tracking influence of past reflections on future decisions, via embedded trace metadata.
+- Building chains of reflection sessions across time to support longitudinal introspection.

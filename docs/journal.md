@@ -19,6 +19,7 @@ Logs a journal entry for a specific session.
   "limit": 5
 }
 ```
+`limit` is optional; defaults to 5 if omitted. The session must already have memories stored.
 
 **Behavior:**
 - Queries up to `limit` memories for the given session.
@@ -29,7 +30,9 @@ Logs a journal entry for a specific session.
 ```json
 {
   "session_id": "2024-04-15-demo",
-  "journal": "On April 15th, the memory API was successfully initialized, culminating in a multi-layered structure capable of reflection, planning, and contextual recall. Work continued on solidifying infrastructure, resolving edge-case failures, and articulating a vision for federated memory..."
+  "timestamp": "2024-04-15T21:10:00Z",
+  "journal": "On April 15th, the memory API was successfully initialized...",
+  "tags": ["journal", "meta"]
 }
 ```
 
@@ -37,9 +40,11 @@ Logs a journal entry for a specific session.
 
 - Journals are generated via LLM prompt, typically using the same model used for reflections and dreams (e.g., `mistral-nemo`).
 - Journals serve as time-anchored "narrative moments" and are useful for feeding into `/reflect` or `/dream` later.
+- Journal entries are embedded and stored in the vector database using the same memory pipeline as other types. They can be filtered or prioritized via tags like `journal`, `meta`, or `summary`.
 
 ## Future Considerations
 
 - Add support for daily or rolling summaries across sessions.
 - Tag critical insights or anomalies for later review.
 - Enable personalized tone and formatting preferences for journal entries.
+- Chain journal entries across days or sessions to support continuity and multi-day narrative threads.

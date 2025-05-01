@@ -7,7 +7,7 @@
   - Skip syncing to nodes already listed
   - Append node to `synced_to` list on success
 
-- [ ] **Tag Synced Memories for Pruning**
+- [x] **Tag Synced Memories for Pruning**
   - Append a `synced_to_all_peers` tag when memory has been sent to all active peers
   - Use this tag during pruning to safely remove synced entries
 
@@ -16,7 +16,7 @@
   - Add config options in `config.yaml` or `.env`
   - Write cleanup function to run periodically or via CLI
 
-- [ ] **Avoid Infinite Reflection Loops**
+- [x] **Avoid Infinite Reflection Loops**
   - Identify and suppress automatic analysis of reflection-tagged logs
   - Filter out re-analysis of logs already tagged as summaries
 
@@ -51,6 +51,14 @@
   - Update startup/shutdown flows to await async unregister
   - Eliminate blocking I/O warning on shutdown
 
+- [ ] **Auto-Create Qdrant Collection If Missing**
+  - Add startup check for `panai_memory` collection
+  - Create if not found, using configured size/type
+
+- [ ] **Environment-Aware Docker Support**
+  - Handle bare-metal Ollama vs Docker container networking
+  - Allow override via `.env` and `OLLAMA_BASE_URL`
+
 ---
 
 ## 📦 Open WebUI Integration
@@ -63,6 +71,10 @@
   - Implement `/memory/search`, `/memory/log_memory`, etc., as plugin-callable stages
   - Verify auth context/namespace tagging if used within OWUI sessions
 
+- [ ] **Preserve Model & API Settings Across Restarts**
+  - Investigate persistent Open WebUI volume behavior
+  - Possibly include `.webui.env` or documented workaround
+
 ---
 
 ## 📎 Cleanup & Refactoring
@@ -71,3 +83,9 @@
 - [x] **Add `.env.example` with all keys**
 - [ ] **Add contributor-style doc section on how to run local multi-node mesh**
 - [x] Modularized memory_api and mesh_api into dedicated components (embedding, logging, config, peer registry, routes, utils)
+
+- [ ] **Finish mesh_api Modularization**
+  - `mesh_routes.py`, `peer_registry.py`, `mesh_utils.py` moved and active
+
+- [ ] **Audit and Align All Docs**
+  - Ensure `docs/*.md` files reflect current structure and modular design

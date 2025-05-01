@@ -20,9 +20,10 @@ A self-contained PanAI instance with memory storage, a local model, and API endp
 A logical container for context, associated memories, and related metadata.
 
 ### Memory Types
-- **Searchable**: Embeddings stored in Qdrant
-- **Ephemeral**: Local-only, not persisted
-- **Private/Public**: Shareable classification by user policy
+- **Searchable** – Embedded and indexed in Qdrant for semantic retrieval
+- **Ephemeral** – In-memory only; discarded after use
+- **Private** – Visible only to the originating node
+- **Public** – Eligible for federated sharing based on trust policies
 
 ### Trusted Peer
 Another PanAI node authenticated and authorized to share data.
@@ -41,6 +42,10 @@ Another PanAI node authenticated and authorized to share data.
   - Receives new memories (structured format TBD)
 - `POST /announce_presence`
   - Beacon endpoint for announcing availability
+- `GET /peer_info`
+  - Returns identity, capabilities, and status of the peer node
+
+- Note: All federated requests should support `Authorization` headers for peer validation.
 
 ## 5. Shared Memory Format
 
@@ -48,16 +53,22 @@ All shared memories should conform to a common schema:
 
 ```json
 {
+  "memory_id": "uuid",
   "text": "memory text",
-  "vector": [0.12, 0.44, ...],
+  "embedding_vector": [0.12, 0.44, ...],
   "timestamp": "2025-04-15T15:22:00Z",
   "tags": ["reflection", "remote"],
   "session_id": "remote-session-id",
-  "source_node": "node_fingerprint_or_url"
+  "source_node": "node_fingerprint_or_url",
+  "embedding_model": "recommended_field",
+  "privacy_level": "recommended_field",
+  "signature": "optional_field"
 }
 ```
 
-- Optional fields: `embedding_model`, `privacy_level`, `signature`
+- Required fields: `memory_id`, `text`, `embedding_vector`, `timestamp`, `tags`, `session_id`, `source_node`
+- Recommended fields: `embedding_model`, `privacy_level`
+- Optional fields: `signature`
 
 ## 6. Security & Privacy
 
@@ -66,6 +77,8 @@ All shared memories should conform to a common schema:
 - Optional redaction of sensitive memory fields
 - Peer authentication via shared secrets, keys, or trust token exchange
 - Logging and audit trails for memory exchanges
+- Recommend rotating trust tokens or API keys periodically
+- Federation policy enforcement (e.g., max memories per sync, rate limits)
 
 ## 7. Future Directions
 
@@ -76,3 +89,5 @@ All shared memories should conform to a common schema:
   - Identity verification
   - Consent ledger
   - Memory provenance and auditability
+- Adaptive peer throttling and memory prioritization based on bandwidth or trust level
+- Federated vector routing (memory can be relayed through intermediary nodes if direct connection fails)

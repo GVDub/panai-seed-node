@@ -11,15 +11,18 @@ This document outlines the evolving roadmap for the PanAI Seed Node project. It 
 - [x] Journal and Advice endpoints
 - [x] Git tracking and initial documentation layout
 - [x] Refactor shared memory-query logic to eliminate duplication
+- [x] Modularized `embedding`, `qdrant_interface`, and `memory_logger` components
+- [x] Created `model_manager` for dynamic local model listing and validation
 
 ## Near-Term Goals
 
-- [ ] Add authentication layer to API (e.g., API keys or OAuth2)
-- [ ] Establish persistent startup and watchdog behavior for system restarts
-- [ ] Move endpoint prompts to modular config files
-- [ ] Extend memory to support time-based and event-based querying
-- [x] Begin local memory-to-memory federation (manual sync)
-- [ ] Add support for full conversation logging (multi-turn chat sessions) via `/mesh/log_conversation` endpoint
+- [ ] Add API authentication layer (API keys, OAuth2, or signed requests)
+- [ ] Improve startup resilience and background task registration
+- [ ] Externalize all prompts to `config/prompts/` or `.json` files
+- [x] Add support for multi-turn `/mesh/log_conversation` endpoint
+- [ ] Modularize `task_manager`, `config_loader`, and `logging` architecture
+- [ ] Implement `.env.example` pattern for onboarding consistency
+- [ ] Auto-detect and configure Ollama vs. Llama.cpp deployments
 
 ## Mid-Term Goals
 
@@ -28,6 +31,9 @@ This document outlines the evolving roadmap for the PanAI Seed Node project. It 
 - [ ] Shared embedding model management or version signaling
 - [ ] Memory compression/summarization for long-running sessions
 - [ ] Enable combined user/assistant embeddings per turn for richer conversational memory
+- [ ] Tag-aware memory prioritization and expiration strategy
+- [ ] Scoped memory embeddings by model version or node role
+- [ ] Federated memory influence tracing with metadata signatures
 
 ## Long-Term Vision
 
@@ -37,6 +43,8 @@ This document outlines the evolving roadmap for the PanAI Seed Node project. It 
 - [ ] External connector modules (e.g., browser plugin, document indexers)
 - [ ] Eventual decentralized graph of PanAI nodes with collaborative self-regulation
 - [ ] Conversational session memory weaving and cross-session context linking
+- [ ] Autonomous background reflection and dream loops with influence maps
+- [ ] Optional ethical prompt evaluators per node (e.g. “kindness score” plugin)
 
 ---
 

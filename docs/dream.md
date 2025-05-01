@@ -15,6 +15,7 @@ The `dream` endpoint:
 2. Synthesizes them into a narrative prompt
 3. Sends the prompt to a language model (e.g. Mistral-Nemo) via Ollama or another interface
 4. Logs the resulting dream output back into the memory system, tagged as "dream" and "meta"
+5. Stores traceable metadata to allow linking future reflections or recommendations back to dream-originated insights
 
 ## Output
 
@@ -22,8 +23,10 @@ The result is a structured JSON response containing the generated dream text and
 
 ## Future Work
 
-- Tagging dream outputs for influence tracking in future reasoning
-- Using dream data to guide reflection and advice generation
-- Connecting dreams across sessions to identify persistent subconscious threads
+- Implement metadata tagging to trace how dream-derived insights influence later memory recall, decision-making, or reflection paths.
+- Incorporate dreams into reflection loops to enrich the system’s recommendations and explore unresolved or aspirational themes.
+- Identify long-range patterns or motifs across multiple dreams, surfacing recurring metaphors or ideas for meta-analysis.
 
 Dreams offer more than just whimsy—they are portals to emergent meaning. In PanAI, they function as a self-guided creativity engine, seeding novel insight from familiar foundations.
+
+By interweaving dreams with the PanAI memory graph, the system learns not just from the world, but from its own imagination.

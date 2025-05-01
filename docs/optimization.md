@@ -1,5 +1,3 @@
-
-
  # Optimization Strategies for PanAI Edge Inference
  
  This document outlines current and proposed strategies for improving performance and responsiveness when running PanAI’s memory and inference systems on edge-class devices like the Aoostar GEM 10.
@@ -21,11 +19,15 @@
  
  - Run the FastAPI app with multiple workers:
    ```bash
-   uvicorn memory_api:app --host 0.0.0.0 --port 8000 --workers 4
+   uvicorn main:app --host 0.0.0.0 --port 8000 --workers 4
    ```
  
  ## Model Management & Preloading
  
+ - Import model loading from `model_manager`:
+   ```python
+   from model_manager import load_model
+   ```
  - Preload both lightweight and heavyweight models at server start if RAM permits:
    ```python
    mistral_model = load_model('mistral')
@@ -37,12 +39,11 @@
        loaded_models["mistral"] = load_model("mistral")
    ```
  
- ## Model Warmup
- 
- - After loading, run a dummy prompt to warm up:
-   ```python
-   model("What is 2 + 2?")
-   ```
+ ## Ollama/Open WebUI Integration
+
+ - If using Ollama outside of Docker, ensure containers can reach it via `host.docker.internal` or a `.env`-defined URL.
+ - Use `OLLAMA_BASE_URL` in `.env` to define model access point across environments.
+ - Open WebUI containers may need to be restarted with `docker compose down && docker compose up -d` to recognize changes.
  
  ## Quantization & Model Selection
  
@@ -72,6 +73,8 @@
  
  - Leave 1–2 CPU threads free for system overhead to prevent slowdowns.
  - Profile using representative workloads before scaling.
+ - Use `journalctl -u panai-memory -f` or `docker logs -f <container>` to monitor real-time application logs.
  
  ---
- Last updated: 2025-04-18
+ Last updated: 2025-05-01
+ 

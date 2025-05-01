@@ -14,19 +14,19 @@ The memory module serves as the cognitive backbone of a PanAI instance, allowing
 
 The memory module is implemented as a FastAPI application with endpoints for storing, retrieving, and manipulating memory entries. It uses:
 - **Qdrant** as the vector similarity database
-- **BAAI/bge-small-en** via `SentenceTransformer` for embedding text
+- **BAAI/bge-small-en** via modularized embedding logic in `memory_api/embedding.py` for embedding text
 - **Ollama-compatible models** (e.g., `mistral-nemo`) for summarization, reflection, planning, and dreaming
 
 ## Services Integration
 
-As of the latest refactor, core functionality has been modularized into a `services` directory. This includes:
+As of the latest refactor, core functionality has been modularized into feature-based submodules. This includes:
 
-- `services/memory.py`: Handles memory logging, embedding, and vector search using Qdrant.
-- `services/chat.py`: Manages interaction with local language models via Ollama.
+- `memory_api/qdrant_interface.py`: Handles vector database interaction with Qdrant.
+- `memory_api/embedding.py`: Manages the text embedding pipeline.
 - `services/config.py`: Centralized configuration and environment variable management.
 - `services/logger.py`: Shared logger setup for consistent output and debugging.
 
-These services are consumed by the main FastAPI app, enabling easier extension, testing, and eventual integration into a federated PanAI network.
+The legacy `services/` directory is being phased out in favor of these modular components, enabling easier extension, testing, and eventual integration into a federated PanAI network.
 
 ## Key Endpoints
 
@@ -45,9 +45,12 @@ These services are consumed by the main FastAPI app, enabling easier extension, 
 
 ## File Location
 
-The core application code has been modularized and now resides in:
-/memory_api/memory_api.py
-/services/memory.py
+The primary application logic is now split across:
+- memory_api/memory_api.py (API routes and logic)
+- memory_api/embedding.py (text embedding pipeline)
+- memory_api/qdrant_interface.py (vector DB interaction)
+- services/config.py (central configuration)
+- services/logger.py (logging)
 
 ## Future Directions
 
@@ -57,6 +60,8 @@ Planned improvements include:
 - Streamlined utility functions for generating prompts
 - Dynamic memory pruning or archiving
 - Cross-node memory sharing and federated memory sync
+- Refactor remaining monolithic logic into smaller testable modules
+- Introduce memory tagging strategies for priority and expiration
 
 ## License
 

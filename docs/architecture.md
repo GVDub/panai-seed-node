@@ -8,18 +8,45 @@
  
  ## Core Components
  
- ### 🧠 Memory API
- A FastAPI-based microservice responsible for:
- - Logging user/system-generated memory entries
- - Performing reflection, summarization, and advice generation
- - Embedding and storing vectors in a local Qdrant instance
- - Upcoming modularization to separate CRUD, Search, Reflection, and related functionalities
+### 🧠 Memory API
+A FastAPI-based microservice responsible for:
+- Logging user/system-generated memory entries
+- Performing reflection, summarization, and advice generation
+- Embedding and storing vectors in a local Qdrant instance
+- Modularized into `qdrant_interface`, `embedding`, `config_loader`, and `memory_logger` for separation of concerns
  
- ### 🔄 Chat and Inference Services
- - Dynamic model selection based on task type
- - Lightweight inference endpoints for multi-modal or multi-model reasoning
- - Designed to plug into Ollama or local llama.cpp infrastructure
- - Supports dynamic model discovery (e.g., Ollama polling) and upcoming heterogeneous model federation
+### 🔄 Chat and Inference Services
+- Dynamic model selection based on task type
+- Inference endpoints leverage multiple models across nodes (e.g., Qwen3 on Apple Silicon, Mistral on GPU systems)
+- Uses Ollama or direct llama.cpp-based execution for local inference
+- Supports dynamic model discovery and registration via `model_manager.py`
+- Expanding support for heterogeneous model federation
+---
+
+### 🧩 Modular Design
+
+PanAI has been actively refactored to support a clean, modular architecture:
+- Each major domain (memory, mesh, models) has its own directory and logic boundaries
+- Shared services like logging, config loading, and embedding are isolated into maintainable modules
+- This separation simplifies scaling, onboarding contributors, and writing reliable tests
+
+#### Component Relationships
+
+```mermaid
+graph TD
+  A[User Request] --> B[FastAPI Main App]
+  B --> C[Memory API]
+  B --> D[Model Manager]
+  B --> E[Mesh API]
+
+  C --> C1[qdrant_interface]
+  C --> C2[embedding]
+  C --> C3[memory_logger]
+  C --> C4[config_loader]
+
+  E --> E1[peer_registry]
+  E --> E2[mesh_utils]
+```
  
  ### 🔗 Node Mesh
  - Each PanAI instance can query others on the LAN via REST API

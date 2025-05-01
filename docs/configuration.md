@@ -45,7 +45,7 @@ memory:
     distance_metric: "cosine"
 ```
 
-## Service Endpoints
+## Service Endpoints & Feature Toggles
 
 Each memory or processing module (e.g., journal, dream, reflect) can be independently enabled or disabled.
 
@@ -60,11 +60,12 @@ services:
   summarize: true
 ```
 
-## API Key and Access Control
+## API Keys and Access Control
 
 Use `.env` files or secret mounting for managing keys and access credentials.
 
-Example `.env` file:
+## Environment Variables (.env) Example
+
 ```
 OLLAMA_API_BASE_URL=http://localhost:11434
 NODE_SECRET_KEY=your-secret-key
@@ -85,6 +86,8 @@ federation:
     service: "consul"
     domain: "panai.local"
 ```
+
+## Future Extensibility
 
 ---
 
